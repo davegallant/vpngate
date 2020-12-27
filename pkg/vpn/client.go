@@ -5,6 +5,6 @@ import (
 )
 
 func Connect(config string) error {
-	exec.Run("sudo", ".", "openvpn", "--config", config)
+	exec.Run("openvpn", ".", "--script-security", "2", "--config", config)
 	return nil
 }

@@ -3,6 +3,7 @@ module github.com/davegallant/vpngate
 go 1.15
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.2.7
 	github.com/golangci/golangci-lint v1.33.0 // indirect
 	github.com/jawher/mow.cli v1.2.0
 	github.com/jszwec/csvutil v1.4.0

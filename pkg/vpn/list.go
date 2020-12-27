@@ -20,9 +20,11 @@ const (
 type Server struct {
 	HostName          string `csv:"#HostName"`
 	CountryLong       string `csv:"CountryLong"`
+	CountryShort      string `csv:"CountryShort"`
 	Score             int    `csv:"Score"`
 	IpAddr            string `csv:"IP"`
 	OpenVpnConfigData string `csv:"OpenVPN_ConfigData_Base64"`
+	Ping              int    `csv:"Ping"`
 }
 
 func streamToBytes(stream io.Reader) []byte {
