@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog/log"
@@ -39,7 +42,27 @@ var connectCmd = &cobra.Command{
 		}
 		survey.AskOne(prompt, &serverSelected, survey.WithPageSize(10))
 
-		vpn.Connect("/home/dave/Downloads/openvpn/vpngate_public-vpn-227.opengw.net_tcp_443.ovpn")
+		decodedConfig, err := base64.StdEncoding.DecodeString((*vpnServers)[30].OpenVpnConfigData)
+		if err != nil {
+			log.Fatal()
+		}
+
+		tmpfile, err := ioutil.TempFile("", "vpngate")
+		if err != nil {
+			log.Fatal()
+		}
+
+		defer os.Remove(tmpfile.Name())
+
+		if _, err := tmpfile.Write(decodedConfig); err != nil {
+			log.Fatal()
+		}
+
+		if err := tmpfile.Close(); err != nil {
+			log.Fatal()
+		}
+
+		vpn.Connect(tmpfile.Name())
 
 	},
 }
