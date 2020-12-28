@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"bytes"
-	"fmt"
 	"io"
 
 	"github.com/jszwec/csvutil"
@@ -22,7 +21,7 @@ type Server struct {
 	CountryLong       string `csv:"CountryLong"`
 	CountryShort      string `csv:"CountryShort"`
 	Score             int    `csv:"Score"`
-	IpAddr            string `csv:"IP"`
+	IPAddr            string `csv:"IP"`
 	OpenVpnConfigData string `csv:"OpenVPN_ConfigData_Base64"`
 	Ping              int    `csv:"Ping"`
 }
@@ -45,8 +44,7 @@ func parseVpnList(r io.Reader) ([]Server, error) {
 	serverList = bytes.TrimSuffix(serverList, []byte("*\r\n"))
 
 	if err := csvutil.Unmarshal(serverList, &servers); err != nil {
-		fmt.Println(err)
-		return nil, errors.Annotate(err, "Unable to parse CSV")
+		return nil, errors.Annotatef(err, "Unable to parse CSV")
 	}
 
 	return servers, nil
@@ -65,7 +63,7 @@ func GetList() (*[]Server, error) {
 	defer r.Body.Close()
 
 	if r.StatusCode != 200 {
-		return nil, errors.Annotatef(err, "Unexpected status code when retrieving vpn list: %s", r.StatusCode)
+		return nil, errors.Annotatef(err, "Unexpected status code when retrieving vpn list: %d", r.StatusCode)
 	}
 
 	vpnServers, err := parseVpnList(r.Body)

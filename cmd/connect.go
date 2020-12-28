@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog/log"
@@ -26,23 +27,32 @@ var connectCmd = &cobra.Command{
 		vpnServers, err := vpn.GetList()
 
 		if err != nil {
-			log.Fatal()
+			log.Fatal().Msgf(err.Error())
+			os.Exit(1)
 		}
 
-		serversAvailable := []string{}
+		serverSelection := []string{}
+		serverSelected := vpn.Server{}
 
 		for _, s := range *vpnServers {
-			serversAvailable = append(serversAvailable, fmt.Sprintf("%s (%s) (%dms)", s.HostName, s.CountryShort, s.Ping))
+			serverSelection = append(serverSelection, fmt.Sprintf("%s (%s)", s.HostName, s.CountryShort))
 		}
 
-		serverSelected := ""
+		selection := ""
 		prompt := &survey.Select{
 			Message: "Choose a server:",
-			Options: serversAvailable,
+			Options: serverSelection,
 		}
-		survey.AskOne(prompt, &serverSelected, survey.WithPageSize(10))
+		survey.AskOne(prompt, &selection, survey.WithPageSize(10))
 
-		decodedConfig, err := base64.StdEncoding.DecodeString((*vpnServers)[30].OpenVpnConfigData)
+		// Server lookup from selection could be faster than this
+		for _, s := range *vpnServers {
+			if strings.Contains(selection, s.HostName) {
+				serverSelected = s
+			}
+		}
+
+		decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
 		if err != nil {
 			log.Fatal()
 		}
@@ -61,6 +71,8 @@ var connectCmd = &cobra.Command{
 		if err := tmpfile.Close(); err != nil {
 			log.Fatal()
 		}
+
+		// log.Info().Msgf("Connecting to %s", serverSelected.CountryLong)
 
 		vpn.Connect(tmpfile.Name())
 
