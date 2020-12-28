@@ -11,6 +11,7 @@ require (
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f
 	github.com/juju/testing v0.0.0-20201216035041-2be42bba85f3 // indirect
 	github.com/rs/zerolog v1.20.0
+	github.com/showwin/speedtest-go v1.1.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
 	gotest.tools/gotestsum v0.6.0

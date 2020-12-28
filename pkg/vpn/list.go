@@ -23,7 +23,7 @@ type Server struct {
 	Score             int    `csv:"Score"`
 	IPAddr            string `csv:"IP"`
 	OpenVpnConfigData string `csv:"OpenVPN_ConfigData_Base64"`
-	Ping              int    `csv:"Ping"`
+	Ping              string `csv:"Ping"`
 }
 
 func streamToBytes(stream io.Reader) []byte {

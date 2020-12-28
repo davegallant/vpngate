@@ -59,22 +59,30 @@ var connectCmd = &cobra.Command{
 
 		tmpfile, err := ioutil.TempFile("", "vpngate")
 		if err != nil {
-			log.Fatal()
+			log.Fatal().Msgf(err.Error())
+			os.Exit(1)
 		}
 
 		defer os.Remove(tmpfile.Name())
 
 		if _, err := tmpfile.Write(decodedConfig); err != nil {
-			log.Fatal()
+			log.Fatal().Msgf(err.Error())
+			os.Exit(1)
 		}
 
 		if err := tmpfile.Close(); err != nil {
-			log.Fatal()
+			log.Fatal().Msgf(err.Error())
+			os.Exit(1)
 		}
 
-		// log.Info().Msgf("Connecting to %s", serverSelected.CountryLong)
+		log.Info().Msgf("Connecting to %s (%s) in %s", serverSelected.HostName, serverSelected.IPAddr, serverSelected.CountryLong)
 
-		vpn.Connect(tmpfile.Name())
+		err = vpn.Connect(tmpfile.Name())
+
+		if err != nil {
+			log.Fatal().Msgf(err.Error())
+			os.Exit(1)
+		}
 
 	},
 }
