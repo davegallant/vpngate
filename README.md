@@ -6,12 +6,12 @@ This client fetches the list of available relay servers provided by vpngate.net.
 
 Once connected, you can check out your IP address: https://nordvpn.com/what-is-my-ip/
 
-## requirements
+## Requirements
 
-- openvpn
-- macOS or Linux (Windows may work but untested)
+- [openvpn](https://github.com/OpenVPN/openvpn)
+- macOS or Linux (Windows is untested)
 
-## usage
+## Usage
 
 ```sh
 vpngate is a client for vpngate.net
@@ -31,8 +31,15 @@ Flags:
 Use "vpngate [command] --help" for more information about a command.
 ```
 
-## TODO
+## Notes
+
+- I do not maintain any of the VPN servers on vpngate.net. Connect to these VPN servers at your own discretion
+- Many of the listed servers claim to have a logging policy of 2 weeks
+
+
+## Todo
 
 - Cache list of vpn servers in a json file (merge cache so old configs can be still used?)
 - Allow for servers to be cycled periodically (--cycle)
 - Allow for a specific country to be selected (--country)
+
