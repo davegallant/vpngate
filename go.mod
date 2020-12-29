@@ -10,6 +10,7 @@ require (
 	github.com/jszwec/csvutil v1.4.0
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f
 	github.com/juju/testing v0.0.0-20201216035041-2be42bba85f3 // indirect
+	github.com/olekukonko/tablewriter v0.0.4
 	github.com/rs/zerolog v1.20.0
 	github.com/showwin/speedtest-go v1.1.0
 	github.com/sirupsen/logrus v1.7.0

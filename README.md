@@ -11,9 +11,28 @@ Once connected, you can check out your IP address: https://nordvpn.com/what-is-m
 - openvpn
 - macOS or Linux (Windows may work but untested)
 
+## usage
+
+```sh
+vpngate is a client for vpngate.net
+
+Usage:
+  vpngate [flags]
+  vpngate [command]
+
+Available Commands:
+  connect     Connect to a vpn server
+  help        Help about any command
+  list        List all available vpn servers
+
+Flags:
+  -h, --help   help for vpngate
+
+Use "vpngate [command] --help" for more information about a command.
+```
+
 ## TODO
 
-- Allow for random server to be selected (--random)
-- Allow for servers to be cycled through when a speedtest fails (--cycle)
+- Cache list of vpn servers in a json file (merge cache so old configs can be still used?)
+- Allow for servers to be cycled periodically (--cycle)
 - Allow for a specific country to be selected (--country)
-- Cache list of vpn servers in a json file (merge cache?)

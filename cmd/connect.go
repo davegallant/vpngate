@@ -25,8 +25,9 @@ func init() {
 
 var connectCmd = &cobra.Command{
 	Use:   "connect",
-	Short: "Connect",
+	Short: "Connect to a vpn server",
 	Long:  `Connect to a vpn from a list of relay servers`,
+	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		vpnServers, err := vpn.GetList()
@@ -50,18 +51,23 @@ var connectCmd = &cobra.Command{
 		}
 
 		if flagRandom {
+			// Pick a random server
 			serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
 		} else {
 
-			// if flagHostName
-			survey.AskOne(prompt, &selection, survey.WithPageSize(10))
+			if len(args) > 0 {
+				selection = args[0]
+			} else {
+				survey.AskOne(prompt, &selection, survey.WithPageSize(10))
+			}
 
-			// Server lookup from selection could be faster than this
+			// Server lookup from selection could be more optimized with a hash map
 			for _, s := range *vpnServers {
 				if strings.Contains(selection, s.HostName) {
 					serverSelected = s
 				}
 			}
+			// if
 		}
 
 		decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
