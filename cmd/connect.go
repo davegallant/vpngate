@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"encoding/base64"
+
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"strings"
 
@@ -14,14 +16,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var flagRandom bool
+
 func init() {
+	connectCmd.Flags().BoolVarP(&flagRandom, "random", "r", false, "connect to a random server")
 	rootCmd.AddCommand(connectCmd)
 }
 
 var connectCmd = &cobra.Command{
 	Use:   "connect",
 	Short: "Connect",
-	Long:  `Connect to a vpn from a list of servers`,
+	Long:  `Connect to a vpn from a list of relay servers`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		vpnServers, err := vpn.GetList()
@@ -43,12 +48,19 @@ var connectCmd = &cobra.Command{
 			Message: "Choose a server:",
 			Options: serverSelection,
 		}
-		survey.AskOne(prompt, &selection, survey.WithPageSize(10))
 
-		// Server lookup from selection could be faster than this
-		for _, s := range *vpnServers {
-			if strings.Contains(selection, s.HostName) {
-				serverSelected = s
+		if flagRandom {
+			serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
+		} else {
+
+			// if flagHostName
+			survey.AskOne(prompt, &selection, survey.WithPageSize(10))
+
+			// Server lookup from selection could be faster than this
+			for _, s := range *vpnServers {
+				if strings.Contains(selection, s.HostName) {
+					serverSelected = s
+				}
 			}
 		}
 
