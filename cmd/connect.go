@@ -67,12 +67,17 @@ var connectCmd = &cobra.Command{
 					serverSelected = s
 				}
 			}
-			// if
+
+			if serverSelected.HostName == "" {
+				log.Fatal().Msgf("Server '%s' was not found", selection)
+				os.Exit(1)
+			}
 		}
 
 		decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
 		if err != nil {
-			log.Fatal()
+			log.Fatal().Msgf(err.Error())
+			os.Exit(1)
 		}
 
 		tmpfile, err := ioutil.TempFile("", "vpngate")
