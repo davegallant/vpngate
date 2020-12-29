@@ -51,7 +51,7 @@ var connectCmd = &cobra.Command{
 		}
 
 		if flagRandom {
-			// Pick a random server
+			// Select a random server
 			serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
 		} else {
 
