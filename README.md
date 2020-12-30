@@ -23,24 +23,26 @@ go get github.com/davegallant/vpngate
 
 ## Usage
 
+### List Available VPNs
+
+```sh
+$ vpngate list
+```
+
+### Connect to a VPN
+
 Because openvpn creates a network interface, run the connect command with `sudo` or an account with escalated privileges.
 
 ```sh
-vpngate is a client for vpngate.net
+$ sudo vpngate connect
+```
 
-Usage:
-  vpngate [flags]
-  vpngate [command]
+#### Random
 
-Available Commands:
-  connect     Connect to a vpn server
-  help        Help about any command
-  list        List all available vpn servers
+If the country doesn't matter, a random VPN can be selected:
 
-Flags:
-  -h, --help   help for vpngate
-
-Use "vpngate [command] --help" for more information about a command.
+```sh
+$ sudo vpngate connect --random
 ```
 
 ## Notes
@@ -51,5 +53,4 @@ Use "vpngate [command] --help" for more information about a command.
 
 ## Todo
 
-- Allow for a specific country to be selected (--country)
 - Allow for servers to be cycled periodically (--cycle)

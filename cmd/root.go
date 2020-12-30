@@ -11,7 +11,10 @@ var rootCmd = &cobra.Command{
 	Use:   "vpngate",
 	Short: "vpngate is a client for vpngate.net",
 	Run: func(cmd *cobra.Command, args []string) {
-		// Do Stuff Here
+		if len(args) == 0 {
+			cmd.Help()
+			os.Exit(0)
+		}
 	},
 }
 

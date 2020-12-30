@@ -14,7 +14,7 @@ import (
 func Run(path string, workDir string, args ...string) (string, error) {
 	_, err := exec.LookPath(path)
 	if err != nil {
-		log.Error().Msgf("%s required, please install it before using this tool", path)
+		log.Error().Msgf("%s is required, please install it", path)
 		os.Exit(1)
 	}
 	cmd := exec.Command(path, args...)

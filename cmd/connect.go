@@ -25,7 +25,7 @@ func init() {
 
 var connectCmd = &cobra.Command{
 	Use:   "connect",
-	Short: "Connect to a vpn server",
+	Short: "Connect to a vpn server (survey selection appears if hostname is not provided)",
 	Long:  `Connect to a vpn from a list of relay servers`,
 	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {

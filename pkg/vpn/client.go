@@ -5,18 +5,17 @@ import (
 
 	"github.com/davegallant/vpngate/pkg/exec"
 	"github.com/davegallant/vpngate/pkg/network"
-	"github.com/rs/zerolog/log"
 )
 
-func Connect(config string) error {
+// Connect to a specified OpenVPN configuration
+func Connect(configPath string) error {
 	go func() {
-		log.Info().Msg("Starting speed tests")
 		for {
 			network.TestSpeed()
 			time.Sleep(time.Minute)
 		}
 
 	}()
-	_, err := exec.Run("openvpn", ".", "--config", config)
+	_, err := exec.Run("openvpn", ".", "--verb", "4", "--config", configPath)
 	return err
 }
