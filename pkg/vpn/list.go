@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/jszwec/csvutil"
+	"github.com/rs/zerolog/log"
 
 	"github.com/juju/errors"
 )
@@ -33,7 +34,7 @@ func streamToBytes(stream io.Reader) []byte {
 }
 
 // parse csv
-func parseVpnList(r io.Reader) ([]Server, error) {
+func parseVpnList(r io.Reader) (*[]Server, error) {
 
 	var servers []Server
 
@@ -47,13 +48,31 @@ func parseVpnList(r io.Reader) ([]Server, error) {
 		return nil, errors.Annotatef(err, "Unable to parse CSV")
 	}
 
-	return servers, nil
+	return &servers, nil
 
 }
 
 // GetList returns a list of vpn servers
 func GetList() (*[]Server, error) {
 
+	cacheExpired := vpnListCacheIsExpired()
+
+	var servers *[]Server
+
+	if !cacheExpired {
+		servers, err := getVpnListCache()
+
+		if err != nil {
+			log.Info().Msg("Unable to retrieve vpn list from cache")
+		} else {
+			return servers, nil
+		}
+
+	} else {
+		log.Info().Msg("The vpn server list cache has expired")
+	}
+
+	log.Info().Msg("Fetching the latest server list")
 	r, err := http.Get(vpnList)
 
 	if err != nil {
@@ -66,11 +85,17 @@ func GetList() (*[]Server, error) {
 		return nil, errors.Annotatef(err, "Unexpected status code when retrieving vpn list: %d", r.StatusCode)
 	}
 
-	vpnServers, err := parseVpnList(r.Body)
+	servers, err = parseVpnList(r.Body)
 
 	if err != nil {
 		return nil, errors.Annotate(err, "unable to parse vpn list")
 	}
 
-	return &vpnServers, nil
+	err = writeVpnListToCache(*servers)
+
+	if err != nil {
+		log.Warn().Msgf("Unable to write servers to cache: ", err)
+	}
+
+	return servers, nil
 }

@@ -15,6 +15,12 @@ Once connected, you can check out your IP address: https://nordvpn.com/what-is-m
 - [openvpn](https://github.com/OpenVPN/openvpn)
 - macOS or Linux (might work on Windows)
 
+## Install
+
+```sh
+go get github.com/davegallant/vpngate
+```
+
 ## Usage
 
 Because openvpn creates a network interface, run the connect command with `sudo` or an account with escalated privileges.
@@ -45,7 +51,5 @@ Use "vpngate [command] --help" for more information about a command.
 
 ## Todo
 
-- Cache list of vpn servers in a json file (merge cache so old configs can be still used?)
-- Allow for servers to be cycled periodically (--cycle)
 - Allow for a specific country to be selected (--country)
-
+- Allow for servers to be cycled periodically (--cycle)
