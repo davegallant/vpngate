@@ -80,7 +80,7 @@ var connectCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		tmpfile, err := ioutil.TempFile("", "vpngate")
+		tmpfile, err := ioutil.TempFile("", "vpngate-openvpn-config-")
 		if err != nil {
 			log.Fatal().Msgf(err.Error())
 			os.Exit(1)
