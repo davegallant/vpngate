@@ -58,7 +58,11 @@ var connectCmd = &cobra.Command{
 			if len(args) > 0 {
 				selection = args[0]
 			} else {
-				survey.AskOne(prompt, &selection, survey.WithPageSize(10))
+				err := survey.AskOne(prompt, &selection, survey.WithPageSize(10))
+				if err != nil {
+					log.Error().Msg("Unable to obtain hostname from survey")
+					os.Exit(1)
+				}
 			}
 
 			// Server lookup from selection could be more optimized with a hash map

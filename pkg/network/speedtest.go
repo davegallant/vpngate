@@ -27,9 +27,23 @@ func TestSpeed() error {
 	}
 
 	for _, s := range targets {
-		s.PingTest()
-		s.DownloadTest(true)
-		s.UploadTest(true)
+		err := s.PingTest()
+
+		if err != nil {
+			log.Error().Msg("Failed to obtain ping")
+		}
+
+		err = s.DownloadTest(true)
+
+		if err != nil {
+			log.Error().Msg("Failed download test")
+		}
+
+		err = s.UploadTest(true)
+
+		if err != nil {
+			log.Error().Msg("Failed upload test")
+		}
 
 		log.Info().Msgf("Latency: %s, Download: %f, Upload: %f", s.Latency, s.DLSpeed, s.ULSpeed)
 	}

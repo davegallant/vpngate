@@ -23,7 +23,10 @@ func Connect(configPath string) error {
 
 	go func() {
 		for {
-			network.TestSpeed()
+			err = network.TestSpeed()
+			if err != nil {
+				log.Error().Msg("Failed to test network speed")
+			}
 			time.Sleep(time.Minute)
 		}
 

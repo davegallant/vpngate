@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.7
+	github.com/golangci/golangci-lint v1.27.0 // indirect
 	github.com/hpcloud/tail v1.0.0
 	github.com/jszwec/csvutil v1.4.0
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f

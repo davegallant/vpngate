@@ -29,7 +29,10 @@ type Server struct {
 
 func streamToBytes(stream io.Reader) []byte {
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(stream)
+	_, err := buf.ReadFrom(stream)
+	if err != nil {
+		log.Error().Msg("Unable to stream bytes")
+	}
 	return buf.Bytes()
 }
 
@@ -94,7 +97,7 @@ func GetList() (*[]Server, error) {
 	err = writeVpnListToCache(*servers)
 
 	if err != nil {
-		log.Warn().Msgf("Unable to write servers to cache: ", err)
+		log.Warn().Msgf("Unable to write servers to cache: %s", err)
 	}
 
 	return servers, nil

@@ -45,7 +45,11 @@ func getVpnListCache() (*[]Server, error) {
 
 	var servers []Server
 
-	json.Unmarshal(byteValue, &servers)
+	err = json.Unmarshal(byteValue, &servers)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &servers, nil
 }
@@ -81,5 +85,5 @@ func vpnListCacheIsExpired() bool {
 
 	lastModified := file.ModTime()
 
-	return (time.Now().Sub(lastModified)) > time.Duration(24*time.Hour)
+	return (time.Since(lastModified)) > time.Duration(24*time.Hour)
 }
