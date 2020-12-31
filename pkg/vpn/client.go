@@ -7,8 +7,8 @@ import (
 
 	"github.com/davegallant/vpngate/pkg/exec"
 	"github.com/davegallant/vpngate/pkg/network"
-	"github.com/hpcloud/tail"
 	"github.com/juju/errors"
+	"github.com/nxadm/tail"
 	"github.com/rs/zerolog/log"
 )
 
