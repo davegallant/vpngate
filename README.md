@@ -31,7 +31,7 @@ $ vpngate list
 
 ### Connect to a VPN
 
-Because openvpn creates a network interface, run the connect command with `sudo` or an account with escalated privileges.
+Because openvpn creates a network interface, run the connect command with `sudo` or a user with escalated privileges.
 
 ```sh
 $ sudo vpngate connect
