@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/base64"
+	"time"
 
 	"fmt"
 	"io/ioutil"
@@ -52,7 +53,8 @@ var connectCmd = &cobra.Command{
 
 		if flagRandom {
 			// Select a random server
-			serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
+			rand.Seed(time.Now().UnixNano())
+			serverSelected = (*vpnServers)[rand.Intn(50)]
 		} else {
 
 			if len(args) > 0 {
