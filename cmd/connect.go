@@ -42,7 +42,7 @@ var connectCmd = &cobra.Command{
 		serverSelected := vpn.Server{}
 
 		for _, s := range *vpnServers {
-			serverSelection = append(serverSelection, fmt.Sprintf("%s (%s)", s.HostName, s.CountryShort))
+			serverSelection = append(serverSelection, fmt.Sprintf("%s (%s)", s.HostName, s.CountryLong))
 		}
 
 		selection := ""
