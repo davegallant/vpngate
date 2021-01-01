@@ -2,11 +2,9 @@
 
 This is a client for [vpngate.net](https://www.vpngate.net/).
 
-![image](https://user-images.githubusercontent.com/4519234/103308173-ce250780-49df-11eb-9032-ef832e5b9463.png)
+![vpngate](https://user-images.githubusercontent.com/4519234/103447878-41887c80-4c5f-11eb-8681-add9717dbb88.gif)
 
 This client fetches the list of available relay servers provided by vpngate.net. Once connected to a server, speed tests kick off to determine latency, upload speed and download speed.
-
-![image](https://user-images.githubusercontent.com/4519234/103308641-e47f9300-49e0-11eb-8ff2-77c6e3e8cc7b.png)
 
 You can check out your current IP address and region at https://nordvpn.com/what-is-my-ip/, or simply run the following command in a terminal:
 
