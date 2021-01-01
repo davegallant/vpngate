@@ -64,7 +64,7 @@ $ sudo vpngate connect --random
 
 ## Notes
 
-- I do not maintain any of the servers on vpngate.net. Connect to these servers at your own discretion
+- I do not maintain any of the servers on vpngate.net (connect to these servers at your own discretion)
 - Many of the listed servers claim to have a logging policy of 2 weeks
 
 
