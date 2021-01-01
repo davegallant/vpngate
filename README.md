@@ -27,7 +27,7 @@ $ go get github.com/davegallant/vpngate
 
 OpenVPN can be installed with [homebrew](https://brew.sh/).
 
-``sh
+```sh
 $ brew install openvpn
 ```
 
