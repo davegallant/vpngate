@@ -47,7 +47,8 @@ $ vpngate list
 
 Because openvpn creates a network interface, run the connect command with `sudo` or a user with escalated privileges.
 
-On macOS, export path by running `export PATH=$(brew --prefix openvpn)/sbin:$PATH` (this can be run each time in a terminal or put in a bash/zsh profile)
+On macOS, `openvpn` may not be within your PATH.
+To fix this, run `export PATH=$(brew --prefix openvpn)/sbin:$PATH` (this can also be added to a bash/zsh profile)
 
 ```sh
 $ sudo vpngate connect
