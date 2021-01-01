@@ -13,7 +13,7 @@ Once connected, you can check out your IP address: https://nordvpn.com/what-is-m
 ## Requirements
 
 - [openvpn](https://github.com/OpenVPN/openvpn)
-- macOS or Linux (might work on Windows)
+- macOS or Linux
 
 ## Install
 
