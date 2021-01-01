@@ -8,7 +8,7 @@ This client fetches the list of available relay servers provided by vpngate.net.
 
 ![image](https://user-images.githubusercontent.com/4519234/103308641-e47f9300-49e0-11eb-8ff2-77c6e3e8cc7b.png)
 
-Once connected, you can check out your IP address: https://nordvpn.com/what-is-my-ip/, or simply `curl ipinfo.io`.
+You can check out your current IP address and region at https://nordvpn.com/what-is-my-ip/, or simply run `curl ipinfo.io` in a terminal.
 
 ## Requirements
 
