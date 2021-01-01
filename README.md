@@ -17,8 +17,18 @@ Once connected, you can check out your IP address: https://nordvpn.com/what-is-m
 
 ## Install
 
+Ensure that [go](https://golang.org/doc/install) is installed.
+
 ```sh
-go get github.com/davegallant/vpngate
+$ go get github.com/davegallant/vpngate
+```
+
+### MacOS
+
+OpenVPN can be installed with [homebrew](https://brew.sh/).
+
+``sh
+$ brew install openvpn
 ```
 
 ## Usage
@@ -32,6 +42,8 @@ $ vpngate list
 ### Connect to a VPN
 
 Because openvpn creates a network interface, run the connect command with `sudo` or a user with escalated privileges.
+
+On MacOS, export path by using `export PATH=$(brew --prefix openvpn)/sbin:$PATH`
 
 ```sh
 $ sudo vpngate connect
