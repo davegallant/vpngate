@@ -37,7 +37,7 @@ $ brew install openvpn
 
 ## Usage
 
-### List Available VPNs
+### List available servers
 
 ```sh
 $ vpngate list
