@@ -5,12 +5,15 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/juju/errors"
 	"github.com/rs/zerolog/log"
 )
 
-// Run executes anycommand in workDir and returns stdout and error.
+// Run executes a command in workDir and returns stdout and error.
+// The spawned process will exit upon termination of this application
+// to ensure a clean exit
 func Run(path string, workDir string, args ...string) (string, error) {
 	_, err := exec.LookPath(path)
 	if err != nil {
@@ -23,6 +26,9 @@ func Run(path string, workDir string, args ...string) (string, error) {
 	stderr := &bytes.Buffer{}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGTERM,
+	}
 	log.Debug().Msgf("Executing " + strings.Join(cmd.Args, " "))
 	err = cmd.Run()
 	output := strings.TrimSpace(stdout.String())
