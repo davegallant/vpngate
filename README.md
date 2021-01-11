@@ -2,7 +2,7 @@
 
 This is a client for [vpngate.net](https://www.vpngate.net/).
 
-![vpngate](https://user-images.githubusercontent.com/4519234/104143692-8ebacb80-538e-11eb-91f0-bb09be434844.gif)
+![vpngate](https://user-images.githubusercontent.com/4519234/104145413-df352780-5394-11eb-92c8-ebd37192bca0.gif)
 
 This client fetches the list of available relay servers provided by vpngate.net. Once connected to a server, speed tests kick off to determine latency, upload speed and download speed.
 
