@@ -76,6 +76,7 @@ func GetList() (*[]Server, error) {
 	}
 
 	log.Info().Msg("Fetching the latest server list")
+
 	r, err := http.Get(vpnList)
 
 	if err != nil {

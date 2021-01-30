@@ -8,8 +8,8 @@ on:
       - main
   pull_request:
 jobs:
-  golangci:
-    name: lint
+  validate:
+    name: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -18,3 +18,5 @@ jobs:
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
           version: v1.29
+      - name: test
+        run: make test
