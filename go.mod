@@ -9,7 +9,7 @@ require (
 	github.com/juju/testing v0.0.0-20201216035041-2be42bba85f3 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
-	github.com/nxadm/tail v1.4.6
+	github.com/nxadm/tail v1.4.8
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/rs/zerolog v1.20.0
 	github.com/showwin/speedtest-go v1.1.1
