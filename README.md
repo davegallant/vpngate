@@ -74,7 +74,7 @@ $ sudo vpngate connect --random
 
 #### Reconnect
 
-To continually attempt to reconnect:
+To continually attempt to reconnect (this can be combined with `--random`):
 
 ```console
 $ sudo vpngate connect --reconnect
