@@ -72,12 +72,15 @@ If the country doesn't matter, a random server can be selected:
 $ sudo vpngate connect --random
 ```
 
+#### Reconnect
+
+To continually attempt to reconnect:
+
+```console
+$ sudo vpngate connect --reconnect
+```
+
 ## Notes
 
 - I do not maintain any of the servers on vpngate.net (connect to these servers at your own discretion)
 - Many of the listed servers claim to have a logging policy of 2 weeks
-
-
-## Todo
-
-- Allow for servers to be cycled periodically (--cycle)
