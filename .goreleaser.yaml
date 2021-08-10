@@ -33,3 +33,15 @@ release:
   github:
     owner: davegallant
     name: vpngate
+
+# Check https://goreleaser.com/customization/homebrew/
+brews:
+  - homepage: 'https://github.com/davegallant/homebrew-public'
+    description: 'a client for vpngate.net'
+    folder: Formula
+    commit_author:
+      name: davegallant
+      email: davegallant@gmail.com
+    tap:
+      owner: davegallant
+      name: homebrew-public
