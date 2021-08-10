@@ -3,10 +3,8 @@ package vpn
 import (
 	"io/ioutil"
 	"os"
-	"time"
 
 	"github.com/davegallant/vpngate/pkg/exec"
-	"github.com/davegallant/vpngate/pkg/network"
 	"github.com/juju/errors"
 	"github.com/nxadm/tail"
 	"github.com/rs/zerolog/log"
@@ -20,17 +18,6 @@ func Connect(configPath string) error {
 		return errors.Annotate(err, "Unable to create a temporary log file")
 	}
 	defer os.Remove(tmpLogFile.Name())
-
-	go func() {
-		for {
-			err = network.TestSpeed()
-			if err != nil {
-				log.Error().Msg("Failed to test network speed")
-			}
-			time.Sleep(time.Minute)
-		}
-
-	}()
 
 	go func() {
 		// Tail the temporary openvpn log file
