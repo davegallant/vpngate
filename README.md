@@ -17,7 +17,19 @@ $ curl ipinfo.io
 - [openvpn](https://github.com/OpenVPN/openvpn)
 - macOS or Linux
 
-## Install from source
+## Install
+
+
+### homebrew
+
+vpngate can be installed with [homebrew](https://brew.sh/):
+
+```sh
+brew install openvpn
+brew install davegallant/public/vpngate
+```
+
+### source
 
 Ensure that [go](https://golang.org/doc/install) is installed.
 
@@ -30,14 +42,6 @@ Ensure that the go bin path is discoverable:
 ```console
 $ echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.profile
 $ source ~/.profile
-```
-
-### MacOS
-
-OpenVPN can be installed with [homebrew](https://brew.sh/).
-
-```console
-$ brew install openvpn
 ```
 
 ## Usage
