@@ -98,8 +98,6 @@ var connectCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			defer os.Remove(tmpfile.Name())
-
 			if _, err := tmpfile.Write(decodedConfig); err != nil {
 				log.Fatal().Msgf(err.Error())
 				os.Exit(1)
@@ -117,7 +115,10 @@ var connectCmd = &cobra.Command{
 			if err != nil && !flagReconnect {
 				log.Fatal().Msgf(err.Error())
 				os.Exit(1)
+			} else {
+				os.Remove(tmpfile.Name())
 			}
+
 		}
 
 	},
