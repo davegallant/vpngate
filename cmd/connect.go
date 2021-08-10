@@ -18,9 +18,11 @@ import (
 )
 
 var flagRandom bool
+var flagReconnect bool
 
 func init() {
 	connectCmd.Flags().BoolVarP(&flagRandom, "random", "r", false, "connect to a random server")
+	connectCmd.Flags().BoolVarP(&flagReconnect, "reconnect", "t", false, "continually attempt to connect to the server")
 	rootCmd.AddCommand(connectCmd)
 }
 
@@ -51,11 +53,7 @@ var connectCmd = &cobra.Command{
 			Options: serverSelection,
 		}
 
-		if flagRandom {
-			// Select a random server
-			rand.Seed(time.Now().UnixNano())
-			serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
-		} else {
+		if !flagRandom {
 
 			if len(args) > 0 {
 				selection = args[0]
@@ -80,37 +78,47 @@ var connectCmd = &cobra.Command{
 			}
 		}
 
-		decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
-		if err != nil {
-			log.Fatal().Msgf(err.Error())
-			os.Exit(1)
-		}
+		for {
 
-		tmpfile, err := ioutil.TempFile("", "vpngate-openvpn-config-")
-		if err != nil {
-			log.Fatal().Msgf(err.Error())
-			os.Exit(1)
-		}
+			if flagRandom {
+				// Select a random server
+				rand.Seed(time.Now().UnixNano())
+				serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
+			}
 
-		defer os.Remove(tmpfile.Name())
+			decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
+			if err != nil {
+				log.Fatal().Msgf(err.Error())
+				os.Exit(1)
+			}
 
-		if _, err := tmpfile.Write(decodedConfig); err != nil {
-			log.Fatal().Msgf(err.Error())
-			os.Exit(1)
-		}
+			tmpfile, err := ioutil.TempFile("", "vpngate-openvpn-config-")
+			if err != nil {
+				log.Fatal().Msgf(err.Error())
+				os.Exit(1)
+			}
 
-		if err := tmpfile.Close(); err != nil {
-			log.Fatal().Msgf(err.Error())
-			os.Exit(1)
-		}
+			if _, err := tmpfile.Write(decodedConfig); err != nil {
+				log.Fatal().Msgf(err.Error())
+				os.Exit(1)
+			}
 
-		log.Info().Msgf("Connecting to %s (%s) in %s", serverSelected.HostName, serverSelected.IPAddr, serverSelected.CountryLong)
+			if err := tmpfile.Close(); err != nil {
+				log.Fatal().Msgf(err.Error())
+				os.Exit(1)
+			}
 
-		err = vpn.Connect(tmpfile.Name())
+			log.Info().Msgf("Connecting to %s (%s) in %s", serverSelected.HostName, serverSelected.IPAddr, serverSelected.CountryLong)
 
-		if err != nil {
-			log.Fatal().Msgf(err.Error())
-			os.Exit(1)
+			err = vpn.Connect(tmpfile.Name())
+
+			if err != nil && !flagReconnect {
+				log.Fatal().Msgf(err.Error())
+				os.Exit(1)
+			} else {
+				os.Remove(tmpfile.Name())
+			}
+
 		}
 
 	},
