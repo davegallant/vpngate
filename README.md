@@ -23,16 +23,11 @@ The simplest method of installation is using homebrew. You can also build from s
 
 ### from homebrew
 
-vpngate can be installed with [homebrew](https://brew.sh/):
+vpngate can be installed with [homebrew](https://brew.sh/) (ensure that xcode is installed before installing homebrew by running `xcode-select --install`).
 
 ```shell
-# Ensure that Xcode is installed
-sudo xcode-select --install
 
-# OpenVPN is required
-brew install openvpn
-
-brew install davegallant/public/vpngate
+brew install openvpn davegallant/public/vpngate
 ```
 
 ### from source
