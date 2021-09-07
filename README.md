@@ -55,26 +55,10 @@ vpngate list
 
 ### Connect to a server
 
-On macOS, `openvpn` may not be within your PATH. To fix this, run:
-
-```shell
-export PATH=$(brew --prefix openvpn)/sbin:$PATH
-```
-
-The above command can also be added to a bash/zsh profile for future use.
-
 Because openvpn creates a network interface, run the connect command with `sudo` or a user with escalated privileges.
 
 ```shell
 sudo vpngate connect
-```
-
-#### Random
-
-If the country doesn't matter, a random server can be selected:
-
-```shell
-sudo vpngate connect --random
 ```
 
 #### Reconnect
@@ -83,6 +67,14 @@ To continually attempt to reconnect (this can be combined with `--random`):
 
 ```shell
 sudo vpngate connect --reconnect
+```
+
+#### Random
+
+If the country doesn't matter, a random server can be selected:
+
+```shell
+sudo vpngate connect --random
 ```
 
 ## Notes
