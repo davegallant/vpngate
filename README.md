@@ -47,6 +47,8 @@ source ~/.profile
 
 ## Usage
 
+> If on macOS, you may need to add openvpn to your PATH (if you installed it with brew): `export PATH=$(brew --prefix openvpn)/sbin:$PATH`
+
 ### List available servers
 
 ```shell
