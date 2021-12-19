@@ -2,13 +2,12 @@ package cmd
 
 import (
 	"encoding/base64"
-	"time"
-
 	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog/log"
@@ -17,8 +16,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var flagRandom bool
-var flagReconnect bool
+var (
+	flagRandom    bool
+	flagReconnect bool
+)
 
 func init() {
 	connectCmd.Flags().BoolVarP(&flagRandom, "random", "r", false, "connect to a random server")
@@ -32,9 +33,7 @@ var connectCmd = &cobra.Command{
 	Long:  `Connect to a vpn from a list of relay servers`,
 	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
-
 		vpnServers, err := vpn.GetList()
-
 		if err != nil {
 			log.Fatal().Msgf(err.Error())
 			os.Exit(1)
@@ -120,6 +119,5 @@ var connectCmd = &cobra.Command{
 			}
 
 		}
-
 	},
 }

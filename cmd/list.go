@@ -20,9 +20,7 @@ var listCmd = &cobra.Command{
 	Short: "List all available vpn servers",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		vpnServers, err := vpn.GetList()
-
 		if err != nil {
 			log.Fatal().Msgf(err.Error())
 			os.Exit(1)
@@ -35,6 +33,5 @@ var listCmd = &cobra.Command{
 			table.Append([]string{strconv.Itoa(i + 1), v.HostName, v.CountryLong, v.Ping, strconv.Itoa(v.Score)})
 		}
 		table.Render() // Send output
-
 	},
 }
