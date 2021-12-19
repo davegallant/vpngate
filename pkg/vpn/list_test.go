@@ -12,12 +12,10 @@ func TestGetListReal(t *testing.T) {
 	_, err := GetList()
 
 	assert.NoError(t, err)
-
 }
 
 // TestParseVpnList parses a local copy of vpn list csv
 func TestParseVpnList(t *testing.T) {
-
 	dat, err := os.Open("../../test_data/vpn_list.csv")
 	assert.NoError(t, err)
 
@@ -31,5 +29,4 @@ func TestParseVpnList(t *testing.T) {
 	assert.Equal(t, (*servers)[0].HostName, "public-vpn-227")
 	assert.Equal(t, (*servers)[0].Ping, "13")
 	assert.Equal(t, (*servers)[0].Score, 2086924)
-
 }
