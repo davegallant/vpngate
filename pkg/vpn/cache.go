@@ -25,20 +25,18 @@ func getCacheDir() string {
 
 func createCacheDir() error {
 	cacheDir := getCacheDir()
-	var AppFs = afero.NewOsFs()
-	return AppFs.MkdirAll(cacheDir, 0700)
+	AppFs := afero.NewOsFs()
+	return AppFs.MkdirAll(cacheDir, 0o700)
 }
 
 func getVpnListCache() (*[]Server, error) {
 	cacheFile := path.Join(getCacheDir(), serverCachefile)
 	serversFile, err := os.Open(cacheFile)
-
 	if err != nil {
 		return nil, err
 	}
 
 	byteValue, err := ioutil.ReadAll(serversFile)
-
 	if err != nil {
 		return nil, err
 	}
@@ -55,30 +53,25 @@ func getVpnListCache() (*[]Server, error) {
 }
 
 func writeVpnListToCache(servers []Server) error {
-
 	err := createCacheDir()
-
 	if err != nil {
 		return err
 	}
 
 	f, err := json.MarshalIndent(servers, "", " ")
-
 	if err != nil {
 		return err
 	}
 
 	cacheFile := path.Join(getCacheDir(), serverCachefile)
 
-	err = ioutil.WriteFile(cacheFile, f, 0644)
+	err = ioutil.WriteFile(cacheFile, f, 0o644)
 
 	return err
-
 }
 
 func vpnListCacheIsExpired() bool {
 	file, err := os.Stat(path.Join(getCacheDir(), serverCachefile))
-
 	if err != nil {
 		return true
 	}

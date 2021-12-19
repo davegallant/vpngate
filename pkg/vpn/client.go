@@ -12,7 +12,6 @@ import (
 
 // Connect to a specified OpenVPN configuration
 func Connect(configPath string) error {
-
 	tmpLogFile, err := ioutil.TempFile("", "vpngate-openvpn-log-")
 	if err != nil {
 		return errors.Annotate(err, "Unable to create a temporary log file")

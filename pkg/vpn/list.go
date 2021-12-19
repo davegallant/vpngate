@@ -1,10 +1,9 @@
 package vpn
 
 import (
-	"net/http"
-
 	"bytes"
 	"io"
+	"net/http"
 
 	"github.com/jszwec/csvutil"
 	"github.com/rs/zerolog/log"
@@ -38,7 +37,6 @@ func streamToBytes(stream io.Reader) []byte {
 
 // parse csv
 func parseVpnList(r io.Reader) (*[]Server, error) {
-
 	var servers []Server
 
 	serverList := streamToBytes(r)
@@ -52,12 +50,10 @@ func parseVpnList(r io.Reader) (*[]Server, error) {
 	}
 
 	return &servers, nil
-
 }
 
 // GetList returns a list of vpn servers
 func GetList() (*[]Server, error) {
-
 	cacheExpired := vpnListCacheIsExpired()
 
 	var servers *[]Server
@@ -78,7 +74,6 @@ func GetList() (*[]Server, error) {
 	log.Info().Msg("Fetching the latest server list")
 
 	r, err := http.Get(vpnList)
-
 	if err != nil {
 		return nil, errors.Annotate(err, "Unable to retrieve vpn list")
 	}
