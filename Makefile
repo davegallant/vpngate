@@ -5,8 +5,7 @@ build: ## Builds the binary
 .PHONY: build
 
 test: ## Run unit tests
-	@go get github.com/rakyll/gotest@v0.0.5
-	gotest -v ./...
+	go test -v ./...
 .PHONY: test
 
 lint: ## Run lint
