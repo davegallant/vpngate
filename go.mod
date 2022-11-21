@@ -15,7 +15,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/rivo/uniseg v0.4.2 // indirect
 	github.com/rs/zerolog v1.28.0
-	github.com/spf13/afero v1.9.2
+	github.com/spf13/afero v1.9.3
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
