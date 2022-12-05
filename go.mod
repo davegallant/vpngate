@@ -5,7 +5,6 @@ go 1.15
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jszwec/csvutil v1.7.1
 	github.com/juju/errors v1.0.0
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -16,7 +15,7 @@ require (
 	github.com/rivo/uniseg v0.4.2 // indirect
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/afero v1.9.3
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
 	golang.org/x/term v0.0.0-20220919170432-7a66f970e087 // indirect
