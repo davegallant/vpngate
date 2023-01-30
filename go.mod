@@ -13,7 +13,7 @@ require (
 	github.com/nxadm/tail v1.4.8
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/rivo/uniseg v0.4.2 // indirect
-	github.com/rs/zerolog v1.28.0
+	github.com/rs/zerolog v1.29.0
 	github.com/spf13/afero v1.9.3
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
