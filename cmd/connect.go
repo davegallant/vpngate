@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"strings"
@@ -29,6 +28,7 @@ func init() {
 
 var connectCmd = &cobra.Command{
 	Use:   "connect",
+	
 	Short: "Connect to a vpn server (survey selection appears if hostname is not provided)",
 	Long:  `Connect to a vpn from a list of relay servers`,
 	Args:  cobra.RangeArgs(0, 1),
@@ -91,7 +91,7 @@ var connectCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			tmpfile, err := ioutil.TempFile("", "vpngate-openvpn-config-")
+			tmpfile, err := os.CreateTemp("", "vpngate-openvpn-config-")
 			if err != nil {
 				log.Fatal().Msgf(err.Error())
 				os.Exit(1)
