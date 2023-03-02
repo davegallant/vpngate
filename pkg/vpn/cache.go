@@ -2,7 +2,7 @@ package vpn
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"time"
@@ -36,7 +36,7 @@ func getVpnListCache() (*[]Server, error) {
 		return nil, err
 	}
 
-	byteValue, err := ioutil.ReadAll(serversFile)
+	byteValue, err := io.ReadAll(serversFile)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func writeVpnListToCache(servers []Server) error {
 
 	cacheFile := path.Join(getCacheDir(), serverCachefile)
 
-	err = ioutil.WriteFile(cacheFile, f, 0o644)
+	err = os.WriteFile(cacheFile, f, 0o644)
 
 	return err
 }
