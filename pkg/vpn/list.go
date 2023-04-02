@@ -45,6 +45,7 @@ func parseVpnList(r io.Reader) (*[]Server, error) {
 	// Trim known invalid rows
 	serverList = bytes.TrimPrefix(serverList, []byte("*vpn_servers\r\n"))
 	serverList = bytes.TrimSuffix(serverList, []byte("*\r\n"))
+	serverList = bytes.ReplaceAll(serverList, []byte(`"`), []byte{})
 
 	if err := csvutil.Unmarshal(serverList, &servers); err != nil {
 		return nil, errors.Annotatef(err, "Unable to parse CSV")
