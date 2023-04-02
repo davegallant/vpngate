@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/davegallant/vpngate/pkg/vpn"
+
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,7 @@ var listCmd = &cobra.Command{
 	Short: "List all available vpn servers",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		
 		vpnServers, err := vpn.GetList()
 		if err != nil {
 			log.Fatal().Msgf(err.Error())
