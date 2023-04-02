@@ -8,6 +8,7 @@ import (
 	"github.com/jszwec/csvutil"
 	"github.com/rs/zerolog/log"
 
+	"github.com/davegallant/vpngate/pkg/util"
 	"github.com/juju/errors"
 )
 
@@ -73,27 +74,36 @@ func GetList() (*[]Server, error) {
 
 	log.Info().Msg("Fetching the latest server list")
 
-	r, err := http.Get(vpnList)
+	var r *http.Response
+
+	err := util.Retry(5, 1, func() error {
+		var err error
+		r, err = http.Get(vpnList)
+		if err != nil {
+			return err
+		}
+		defer r.Body.Close()
+
+		if r.StatusCode != 200 {
+			return errors.Annotatef(err, "Unexpected status code when retrieving vpn list: %d", r.StatusCode)
+		}
+
+		servers, err = parseVpnList(r.Body)
+
+		if err != nil {
+			return err
+		}
+
+		err = writeVpnListToCache(*servers)
+
+		if err != nil {
+			log.Warn().Msgf("Unable to write servers to cache: %s", err)
+		}
+		return nil
+	})
+
 	if err != nil {
-		return nil, errors.Annotate(err, "Unable to retrieve vpn list")
-	}
-
-	defer r.Body.Close()
-
-	if r.StatusCode != 200 {
-		return nil, errors.Annotatef(err, "Unexpected status code when retrieving vpn list: %d", r.StatusCode)
-	}
-
-	servers, err = parseVpnList(r.Body)
-
-	if err != nil {
-		return nil, errors.Annotate(err, "unable to parse vpn list")
-	}
-
-	err = writeVpnListToCache(*servers)
-
-	if err != nil {
-		log.Warn().Msgf("Unable to write servers to cache: %s", err)
+		return nil, err
 	}
 
 	return servers, nil
