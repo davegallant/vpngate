@@ -6,7 +6,7 @@ This is a client for [vpngate.net](https://www.vpngate.net/).
 
 This client fetches the list of available relay servers provided by vpngate.net, and allows you to filter and connect to a server of your liking.
 
-You can check out your current IP address and region at https://nordvpn.com/what-is-my-ip/, or simply run the following command in a terminal:
+You can check out your current IP address and region at https://ipinfo.io, or run the following:
 
 ```shell
 curl ipinfo.io
