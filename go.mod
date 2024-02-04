@@ -8,7 +8,7 @@ require (
 	github.com/juju/errors v1.0.0
 	github.com/nxadm/tail v1.4.11
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/rs/zerolog v1.31.0
+	github.com/rs/zerolog v1.32.0
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.4
