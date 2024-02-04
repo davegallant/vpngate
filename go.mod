@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/jszwec/csvutil v1.9.0
+	github.com/jszwec/csvutil v1.10.0
 	github.com/juju/errors v1.0.0
 	github.com/nxadm/tail v1.4.11
 	github.com/olekukonko/tablewriter v0.0.5
