@@ -1,5 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "schedule": [
+    "every weekend"
+  ],
   "extends": [
     "config:recommended"
   ]
