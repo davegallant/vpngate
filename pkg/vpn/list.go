@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/jszwec/csvutil"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/net/proxy"
 
 	"github.com/davegallant/vpngate/pkg/util"
 	"github.com/juju/errors"
@@ -55,10 +57,11 @@ func parseVpnList(r io.Reader) (*[]Server, error) {
 }
 
 // GetList returns a list of vpn servers
-func GetList() (*[]Server, error) {
+func GetList(socks5Proxy string) (*[]Server, error) {
 	cacheExpired := vpnListCacheIsExpired()
 
 	var servers *[]Server
+	var client *http.Client
 
 	if !cacheExpired {
 		servers, err := getVpnListCache()
@@ -75,11 +78,29 @@ func GetList() (*[]Server, error) {
 
 	log.Info().Msg("Fetching the latest server list")
 
+	if socks5Proxy != "" {
+		dialer, err := proxy.SOCKS5("tcp", socks5Proxy, nil, proxy.Direct)
+		if err != nil {
+			log.Error().Msgf("Error creating SOCKS5 dialer: %v", err)
+			os.Exit(1)
+		}
+
+		httpTransport := &http.Transport{
+			Dial: dialer.Dial,
+		}
+
+		client = &http.Client{
+			Transport: httpTransport,
+		}
+	} else {
+		client = &http.Client{}
+	}
+
 	var r *http.Response
 
 	err := util.Retry(5, 1, func() error {
 		var err error
-		r, err = http.Get(vpnList)
+		r, err = client.Get(vpnList)
 		if err != nil {
 			return err
 		}

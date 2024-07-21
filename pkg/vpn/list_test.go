@@ -9,7 +9,7 @@ import (
 
 // TestGetListReal tests getting the real list of vpn servers
 func TestGetListReal(t *testing.T) {
-	_, err := GetList()
+	_, err := GetList("")
 
 	assert.NoError(t, err)
 }
