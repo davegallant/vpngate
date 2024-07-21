@@ -6,7 +6,7 @@ This is a client for [vpngate.net](https://www.vpngate.net/).
 
 This client fetches the list of available relay servers provided by vpngate.net, and allows you to filter and connect to a server of your liking.
 
-You can check out your current IP address and region at https://ipinfo.io, or run the following:
+You can check out your current IP address and region at <https://ipinfo.io>, or run the following:
 
 ```shell
 curl ipinfo.io
@@ -77,6 +77,28 @@ If the country doesn't matter, a random server can be selected:
 
 ```shell
 sudo vpngate connect --random
+```
+
+#### Proxy
+
+In some cases, anonymity is necessary to populate the list of available VPN servers.
+
+A proxy is a way to bypass restrictions and in some cases, internet censorship.
+
+##### HTTP/HTTPS
+
+Use the specified HTTP/HTTPS proxy to fetch the server list.
+
+```shell
+sudo vpngate connect --proxy "http://localhost:8080"
+```
+
+##### SOCKS5
+
+Use the specified SOCKS5 proxy to fetch the server list.
+
+```shell
+sudo vpngate connect --socks5 "127.0.0.1:1080"
 ```
 
 ## Notes
