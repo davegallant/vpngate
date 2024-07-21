@@ -79,6 +79,16 @@ If the country doesn't matter, a random server can be selected:
 sudo vpngate connect --random
 ```
 
+#### Proxy
+
+##### SOCKS5
+
+Use the specified SOCKS5 proxy to fetch the server list.
+
+```shell
+sudo vpngate connect --socks5 "127.0.0.1:1080"
+```
+
 ## Notes
 
 - I do not maintain any of the servers on vpngate.net (connect to these servers at your own discretion)
