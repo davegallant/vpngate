@@ -18,13 +18,15 @@ import (
 var (
 	flagRandom      bool
 	flagReconnect   bool
+	flagProxy       string
 	flagSocks5Proxy string
 )
 
 func init() {
 	connectCmd.Flags().BoolVarP(&flagRandom, "random", "r", false, "connect to a random server")
 	connectCmd.Flags().BoolVarP(&flagReconnect, "reconnect", "t", false, "continually attempt to connect to the server")
-	connectCmd.Flags().StringVarP(&flagSocks5Proxy, "socks5", "s", "", "provide a socks5 proxy server to connect through (i.e. 127.0.0.1:1080")
+	connectCmd.Flags().StringVarP(&flagProxy, "proxy", "p", "", "provide a http/https proxy server to make requests through (i.e. 127.0.0.1:8080")
+	connectCmd.Flags().StringVarP(&flagSocks5Proxy, "socks5", "s", "", "provide a socks5 proxy server to make requests through (i.e. 127.0.0.1:1080")
 	rootCmd.AddCommand(connectCmd)
 }
 
@@ -35,7 +37,7 @@ var connectCmd = &cobra.Command{
 	Long:  `Connect to a vpn from a list of relay servers`,
 	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
-		vpnServers, err := vpn.GetList(flagSocks5Proxy)
+		vpnServers, err := vpn.GetList(flagProxy, flagSocks5Proxy)
 		if err != nil {
 			log.Fatal().Msgf(err.Error())
 			os.Exit(1)

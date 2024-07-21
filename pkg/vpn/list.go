@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/jszwec/csvutil"
@@ -57,7 +58,7 @@ func parseVpnList(r io.Reader) (*[]Server, error) {
 }
 
 // GetList returns a list of vpn servers
-func GetList(socks5Proxy string) (*[]Server, error) {
+func GetList(httpProxy string, socks5Proxy string) (*[]Server, error) {
 	cacheExpired := vpnListCacheIsExpired()
 
 	var servers *[]Server
@@ -78,7 +79,21 @@ func GetList(socks5Proxy string) (*[]Server, error) {
 
 	log.Info().Msg("Fetching the latest server list")
 
-	if socks5Proxy != "" {
+	if httpProxy != "" {
+		proxyURL, err := url.Parse(httpProxy)
+		if err != nil {
+			log.Error().Msgf("Error parsing proxy:", err)
+			os.Exit(1)
+		}
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+		}
+
+		client = &http.Client{
+			Transport: transport,
+		}
+
+	} else if socks5Proxy != "" {
 		dialer, err := proxy.SOCKS5("tcp", socks5Proxy, nil, proxy.Direct)
 		if err != nil {
 			log.Error().Msgf("Error creating SOCKS5 dialer: %v", err)
