@@ -10,15 +10,18 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
-    ldflags:
-      - -s -w
     goos:
-      - darwin
       - linux
+      - darwin
     goarch:
       - amd64
       - arm
       - arm64
+    goarm:
+      - "7"
+    ldflags:
+      - -s -w
+    mod_timestamp: "{{ .CommitTimestamp }}"
 checksum:
   name_template: "checksums.txt"
 snapshot:
