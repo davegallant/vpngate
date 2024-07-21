@@ -1,36 +1,35 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=jcroql
+version: 2
+
 before:
   hooks:
     - go mod tidy
     - go get -v
     - rm -rf dist
 builds:
--
-  env:
-    - CGO_ENABLED=0
-  ldflags:
-    - -s -w
-  goos:
-    - darwin
-    - linux
-  goarch:
-    - amd64
-    - arm
-    - arm64
-archives:
-- replacements:
-    darwin: Darwin
-    linux: Linux
-    amd64: x86_64
+  - env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm
+      - arm64
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   name_template: "{{ .Tag }}"
 changelog:
   sort: asc
+  use: github
   filters:
     exclude:
-    - '^docs:'
-    - '^test:'
+      - "^docs:"
+      - "^test:"
 release:
   github:
     owner: davegallant
@@ -38,12 +37,12 @@ release:
 
 # Check https://goreleaser.com/customization/homebrew/
 brews:
-  - homepage: 'https://github.com/davegallant/homebrew-public'
-    description: 'a client for vpngate.net'
-    folder: Formula
+  - homepage: "https://github.com/davegallant/homebrew-public"
+    description: "a client for vpngate.net"
+    directory: Formula
     commit_author:
       name: davegallant
       email: davegallant@gmail.com
-    tap:
+    repository:
       owner: davegallant
       name: homebrew-public
