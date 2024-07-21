@@ -82,7 +82,7 @@ func GetList(httpProxy string, socks5Proxy string) (*[]Server, error) {
 	if httpProxy != "" {
 		proxyURL, err := url.Parse(httpProxy)
 		if err != nil {
-			log.Error().Msgf("Error parsing proxy:", err)
+			log.Error().Msgf("Error parsing proxy: %s", err)
 			os.Exit(1)
 		}
 		transport := &http.Transport{
