@@ -14,21 +14,26 @@ curl ipinfo.io
 
 ## Requirements
 
-- [openvpn](https://github.com/OpenVPN/openvpn)
-- macOS or Linux
+- OpenVPN <= 2.5 (configurations on vpngate.net do not seem work on OpenVPN 2.6+)
+- macOS, Linux, or Windows
 
 ## Install
 
-The simplest method of installation is using homebrew. You can also build from source.
+You can install vpngate in a few different ways, and differs slightly depending on your OS.
 
-### from homebrew
+### Homebrew
 
 vpngate can be installed with [homebrew](https://brew.sh/) (ensure that xcode is installed before installing homebrew by running `xcode-select --install`).
 
 ```shell
-
 brew install openvpn davegallant/public/vpngate
 ```
+
+## Windows
+
+On Windows, install OpenVPN 2.5.x from the [official website](https://openvpn.net/community-downloads/).
+
+You must run in the terminal (command prompt) as Administrator in order to be able to run the relevant OpenVPN commands.
 
 ### from source
 

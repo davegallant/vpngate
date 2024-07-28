@@ -2,6 +2,7 @@ package vpn
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/davegallant/vpngate/pkg/exec"
 	"github.com/juju/errors"
@@ -28,6 +29,10 @@ func Connect(configPath string) error {
 		}
 	}()
 
-	_, err = exec.Run("openvpn", ".", "--verb", "4", "--log", tmpLogFile.Name(), "--config", configPath)
+	executable := "openvpn"
+	if runtime.GOOS == "windows" {
+		executable = "C:\\Program Files\\OpenVPN\\bin\\openvpn.exe"
+	}
+	_, err = exec.Run(executable, ".", "--verb", "4", "--log", tmpLogFile.Name(), "--config", configPath)
 	return err
 }
