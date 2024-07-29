@@ -21,15 +21,15 @@ curl ipinfo.io
 
 You can install vpngate in a few different ways, and it will differ slightly depending on your OS.
 
-### Homebrew
+### Homebrew (macOS and linux)
 
-vpngate can be installed with [homebrew](https://brew.sh/) (ensure that xcode is installed before installing homebrew by running `xcode-select --install`).
+vpngate can be installed with [homebrew](https://brew.sh/) (if on macOS, ensure that xcode is installed before installing homebrew by running `xcode-select --install`).
 
 ```shell
 brew install openvpn davegallant/public/vpngate
 ```
 
-## Windows
+### Windows
 
 On Windows, install OpenVPN from the [official website](https://openvpn.net/community-downloads/).
 
