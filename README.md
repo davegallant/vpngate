@@ -14,7 +14,7 @@ curl ipinfo.io
 
 ## Requirements
 
-- OpenVPN <= 2.5 (configurations on vpngate.net do not seem work on OpenVPN 2.6+)
+- OpenVPN >= 2.6
 - macOS, Linux, or Windows
 
 ## Install
@@ -31,13 +31,13 @@ brew install openvpn davegallant/public/vpngate
 
 ## Windows
 
-On Windows, install OpenVPN 2.5.x from the [official website](https://openvpn.net/community-downloads/).
+On Windows, install OpenVPN from the [official website](https://openvpn.net/community-downloads/).
 
-You also need to download an extract the Windows release from the relevant Github release.
+As there is no installer at the moment, you will need to download and extract the Windows release from the relevant Github release.
 
-Open Command Prompt(cmd.exe) *as Administrator*, and run vpngate.exe
+Once the release is tracted, open Command Prompt(cmd.exe) *as Administrator*, and run vpngate.exe from the location where it was extracted.
 
-### from source
+### Build from source
 
 Ensure that [go](https://golang.org/doc/install) is installed.
 

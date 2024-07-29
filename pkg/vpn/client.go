@@ -33,6 +33,7 @@ func Connect(configPath string) error {
 	if runtime.GOOS == "windows" {
 		executable = "C:\\Program Files\\OpenVPN\\bin\\openvpn.exe"
 	}
-	_, err = exec.Run(executable, ".", "--verb", "4", "--log", tmpLogFile.Name(), "--config", configPath)
+
+	_, err = exec.Run(executable, ".", "--verb", "4", "--log", tmpLogFile.Name(), "--config", configPath, "--data-ciphers", "AES-128-CBC")
 	return err
 }
