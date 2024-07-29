@@ -35,7 +35,7 @@ On Windows, install OpenVPN from the [official website](https://openvpn.net/comm
 
 As there is no installer at the moment, you will need to download and extract the Windows release from the relevant Github release.
 
-Once the release is tracted, open Command Prompt(cmd.exe) *as Administrator*, and run vpngate.exe from the location where it was extracted.
+Once the release is extracted, open Command Prompt *as Administrator*, and run vpngate.exe from the location where it was extracted.
 
 <img width="278" alt="image" src="https://github.com/user-attachments/assets/fb47270d-82bb-4790-833a-377b874c8104">
 
