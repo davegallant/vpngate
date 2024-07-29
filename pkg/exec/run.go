@@ -1,19 +1,18 @@
 package exec
 
 import (
-	"bytes"
+	"bufio"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/juju/errors"
 	"github.com/rs/zerolog/log"
 )
 
 // Run executes a command in workDir and returns stdout and error.
 // The spawned process will exit upon termination of this application
 // to ensure a clean exit
-func Run(path string, workDir string, args ...string) (string, error) {
+func Run(path string, workDir string, args ...string) error {
 	_, err := exec.LookPath(path)
 	if err != nil {
 		log.Error().Msgf("%s is required, please install it", path)
@@ -21,25 +20,28 @@ func Run(path string, workDir string, args ...string) (string, error) {
 	}
 	cmd := exec.Command(path, args...)
 	cmd.Dir = workDir
-	stdout := &bytes.Buffer{}
-	stderr := &bytes.Buffer{}
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
 	log.Debug().Msgf("Executing " + strings.Join(cmd.Args, " "))
-	err = cmd.Run()
-	output := strings.TrimSpace(stdout.String())
-	errOut := strings.TrimSpace(stderr.String())
-	if output != "" {
-		log.Debug().Msgf(output)
-	}
-	if errOut != "" {
-		log.Debug().Msgf(errOut)
-	}
-	if _, ok := err.(*exec.ExitError); !ok {
-		return output, errors.Trace(err)
-	}
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return output, errors.Annotatef(err, path, cmd.Args, errOut)
+		log.Fatal().Msgf("Failed to get stdout pipe: %v", err)
 	}
-	return output, nil
+	if err := cmd.Start(); err != nil {
+		log.Fatal().Msgf("Failed to start command: %v", err)
+	}
+
+	scanner := bufio.NewScanner(stdout)
+
+	for scanner.Scan() {
+		log.Debug().Msg(scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal().Msgf("Error reading stdout: %v", err)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		log.Fatal().Msgf("Command finished with error: %v", err)
+		return err
+	}
+	return nil
 }
