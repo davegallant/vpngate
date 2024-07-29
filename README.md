@@ -29,7 +29,7 @@ vpngate can be installed with [homebrew](https://brew.sh/) (ensure that xcode is
 brew install openvpn davegallant/public/vpngate
 ```
 
-## Windows
+### Windows
 
 On Windows, install OpenVPN from the [official website](https://openvpn.net/community-downloads/).
 
