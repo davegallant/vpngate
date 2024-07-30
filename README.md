@@ -2,7 +2,7 @@
 
 This is a client for [vpngate.net](https://www.vpngate.net/).
 
-![vpngate](https://user-images.githubusercontent.com/4519234/104145615-b6f9f880-5395-11eb-812c-c6597a7aed0f.gif)
+![vpngate](https://github.com/user-attachments/assets/dafa2702-8d68-4b5f-badb-2c53ddd68991)
 
 This client fetches the list of available relay servers provided by vpngate.net, and allows you to filter and connect to a server of your liking.
 
