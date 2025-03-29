@@ -7,7 +7,7 @@ require (
 	github.com/jszwec/csvutil v1.10.0
 	github.com/juju/errors v1.0.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.9.0
