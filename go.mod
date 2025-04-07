@@ -1,6 +1,8 @@
 module github.com/davegallant/vpngate
 
-go 1.19
+go 1.23.0
+
+toolchain go1.24.2
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -11,7 +13,7 @@ require (
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/net v0.35.0
+	golang.org/x/net v0.36.0
 )
 
 require (
