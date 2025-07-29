@@ -16,7 +16,7 @@
         pkgs.buildGo123Module rec {
           name = "vpngate";
           src = ./.;
-          vendorHash = "sha256-sx56YaeXMkxnzrA2pL1Ghu4pQYCRL7JNd1UGlCtLHJg=";
+          vendorHash = "sha256-/vFoLL50soOPpo1gz6S2s5mp3zVH9xj6VL73rGdo3do=";
           nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.makeWrapper ];
           env.CGO_ENABLED = 0;
           doCheck = false;
