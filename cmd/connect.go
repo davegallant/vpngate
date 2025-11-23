@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog/log"
@@ -39,7 +38,7 @@ var connectCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		vpnServers, err := vpn.GetList(flagProxy, flagSocks5Proxy)
 		if err != nil {
-			log.Fatal().Msgf(err.Error())
+			log.Fatal().Msg(err.Error())
 			os.Exit(1)
 		}
 
@@ -85,29 +84,28 @@ var connectCmd = &cobra.Command{
 
 			if flagRandom {
 				// Select a random server
-				rand.Seed(time.Now().UnixNano())
 				serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
 			}
 
 			decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
 			if err != nil {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			}
 
 			tmpfile, err := os.CreateTemp("", "vpngate-openvpn-config-")
 			if err != nil {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			}
 
 			if _, err := tmpfile.Write(decodedConfig); err != nil {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			}
 
 			if err := tmpfile.Close(); err != nil {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			}
 
@@ -116,10 +114,14 @@ var connectCmd = &cobra.Command{
 			err = vpn.Connect(tmpfile.Name())
 
 			if err != nil && !flagReconnect {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			} else {
-				os.Remove(tmpfile.Name())
+				err = os.Remove(tmpfile.Name())
+				if err !=  nil {
+					log.Fatal().Msg(err.Error())
+					os.Exit(1)
+				}
 			}
 
 		}

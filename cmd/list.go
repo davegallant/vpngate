@@ -23,10 +23,10 @@ var listCmd = &cobra.Command{
 	Short: "List all available vpn servers",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		
+
 		vpnServers, err := vpn.GetList(flagProxy, flagSocks5Proxy)
 		if err != nil {
-			log.Fatal().Msgf(err.Error())
+			log.Fatal().Msg(err.Error())
 			os.Exit(1)
 		}
 
