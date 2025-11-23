@@ -20,7 +20,7 @@ func Run(path string, workDir string, args ...string) error {
 	}
 	cmd := exec.Command(path, args...)
 	cmd.Dir = workDir
-	log.Debug().Msgf("Executing " + strings.Join(cmd.Args, " "))
+	log.Debug().Msg("Executing " + strings.Join(cmd.Args, " "))
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal().Msgf("Failed to get stdout pipe: %v", err)

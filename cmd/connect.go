@@ -38,7 +38,7 @@ var connectCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		vpnServers, err := vpn.GetList(flagProxy, flagSocks5Proxy)
 		if err != nil {
-			log.Fatal().Msgf(err.Error())
+			log.Fatal().Msg(err.Error())
 			os.Exit(1)
 		}
 
@@ -89,23 +89,23 @@ var connectCmd = &cobra.Command{
 
 			decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
 			if err != nil {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			}
 
 			tmpfile, err := os.CreateTemp("", "vpngate-openvpn-config-")
 			if err != nil {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			}
 
 			if _, err := tmpfile.Write(decodedConfig); err != nil {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			}
 
 			if err := tmpfile.Close(); err != nil {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			}
 
@@ -114,12 +114,12 @@ var connectCmd = &cobra.Command{
 			err = vpn.Connect(tmpfile.Name())
 
 			if err != nil && !flagReconnect {
-				log.Fatal().Msgf(err.Error())
+				log.Fatal().Msg(err.Error())
 				os.Exit(1)
 			} else {
 				err = os.Remove(tmpfile.Name())
 				if err !=  nil {
-					log.Fatal().Msgf(err.Error())
+					log.Fatal().Msg(err.Error())
 					os.Exit(1)
 				}
 			}
