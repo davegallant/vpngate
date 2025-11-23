@@ -119,7 +119,9 @@ func GetList(httpProxy string, socks5Proxy string) (*[]Server, error) {
 		if err != nil {
 			return err
 		}
-		defer r.Body.Close()
+		defer func() {
+			_ = r.Body.Close()
+		}()
 
 		if r.StatusCode != 200 {
 			return errors.Annotatef(err, "Unexpected status code when retrieving vpn list: %d", r.StatusCode)

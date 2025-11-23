@@ -11,5 +11,5 @@ test: ## Run unit tests
 .PHONY: test
 
 lint: ## Run lint
-	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v2.6.2
+	@go get github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6.2
 	golangci-lint run

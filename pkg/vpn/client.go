@@ -14,7 +14,9 @@ func Connect(configPath string) error {
 	if err != nil {
 		return errors.Annotate(err, "Unable to create a temporary log file")
 	}
-	defer os.Remove(tmpLogFile.Name())
+	defer func() {
+		_ = os.Remove(tmpLogFile.Name())
+	}()
 
 	executable := "openvpn"
 	if runtime.GOOS == "windows" {

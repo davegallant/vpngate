@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog/log"
@@ -85,7 +84,6 @@ var connectCmd = &cobra.Command{
 
 			if flagRandom {
 				// Select a random server
-				rand.Seed(time.Now().UnixNano())
 				serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
 			}
 
@@ -119,7 +117,11 @@ var connectCmd = &cobra.Command{
 				log.Fatal().Msgf(err.Error())
 				os.Exit(1)
 			} else {
-				os.Remove(tmpfile.Name())
+				err = os.Remove(tmpfile.Name())
+				if err !=  nil {
+					log.Fatal().Msgf(err.Error())
+					os.Exit(1)
+				}
 			}
 
 		}
