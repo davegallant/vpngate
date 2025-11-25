@@ -13,7 +13,7 @@
     let
       vpngate =
         pkgs:
-        pkgs.buildGo123Module rec {
+        pkgs.buildGo125Module rec {
           name = "vpngate";
           src = ./.;
           vendorHash = "sha256-CP2sFJdIde88WFJlAq29GlE7c1c0xJ6tHzrrasMzJo8=";
