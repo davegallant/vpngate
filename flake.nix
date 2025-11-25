@@ -37,7 +37,7 @@
             packages = with pkgs; [
               gopls
               gotools
-              go_1_23
+              go_1_25
             ];
           };
         };
