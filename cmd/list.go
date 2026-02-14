@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/olekukonko/tablewriter"
+	tw "github.com/olekukonko/tablewriter"
 	"github.com/rs/zerolog/log"
 
 	"github.com/davegallant/vpngate/pkg/vpn"
@@ -30,12 +30,20 @@ var listCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"#", "HostName", "Country", "Ping", "Score"})
+		table := tw.NewWriter(os.Stdout)
+		table.Header([]string{"#", "HostName", "Country", "Ping", "Score"})
 
 		for i, v := range *vpnServers {
-			table.Append([]string{strconv.Itoa(i + 1), v.HostName, v.CountryLong, v.Ping, strconv.Itoa(v.Score)})
+			err := table.Append([]string{strconv.Itoa(i + 1), v.HostName, v.CountryLong, v.Ping, strconv.Itoa(v.Score)})
+			if err != nil {
+				log.Fatal().Msg(err.Error())
+				os.Exit(1)
+			}
 		}
-		table.Render() // Send output
+		err = table.Render()
+		if err != nil {
+			log.Fatal().Msg(err.Error())
+			os.Exit(1)
+		}
 	},
 }
