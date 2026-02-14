@@ -1,3 +1,7 @@
 dist
 
 .vscode
+
+# direnv
+.direnv
+.envrc.local

@@ -1,4 +1,6 @@
 {
+  description = "vpngate - VPN server connector";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -33,12 +35,19 @@
             default = vg;
             vpngate = vg;
           };
-          devShell = pkgs.mkShell {
+          devShells.default = pkgs.mkShell {
+            name = "vpngate-dev";
+            description = "Development environment for vpngate";
             packages = with pkgs; [
+              go_1_26
               gopls
               gotools
-              go_1_25
+              golangci-lint
             ];
+            shellHook = ''
+              echo "Welcome to the vpngate dev environment"
+              go version
+            '';
           };
         };
     in
