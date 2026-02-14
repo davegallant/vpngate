@@ -1,0 +1,55 @@
+name: Update vendorHash in flake.nix
+
+on:
+  push:
+    paths:
+      - 'go.mod'
+      - 'go.sum'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-hash:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixpkgs-unstable
+
+      - name: Calculate new vendorHash
+        id: hash
+        run: |
+          # First, set vendorHash to null to get Nix to calculate what it should be
+          sed -i 's/vendorHash = .*/vendorHash = null;/' flake.nix
+          
+          # Try to build and capture the expected hash
+          HASH=$(nix build .#vpngate 2>&1 | grep -oP "sha256-[a-zA-Z0-9+/]+={0,2}" | head -1)
+          
+          if [ -z "$HASH" ]; then
+            echo "Failed to extract hash from build output"
+            exit 1
+          fi
+          
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          echo "Calculated hash: $HASH"
+
+      - name: Update flake.nix with correct hash
+        run: |
+          sed -i 's/vendorHash = null;/vendorHash = "${{ steps.hash.outputs.hash }}";/' flake.nix
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if git diff --quiet flake.nix; then
+            echo "No changes to commit"
+          else
+            git add flake.nix
+            git commit -m "chore: update vendorHash in flake.nix"
+            git push
+          fi
