@@ -23,13 +23,16 @@ jobs:
       - name: Calculate new vendorHash
         id: hash
         run: |
-          # First, set vendorHash to null to get Nix to calculate what it should be
-          sed -i 's/vendorHash = .*/vendorHash = null;/' flake.nix
+          # Set vendorHash to empty string to trigger hash mismatch
+          sed -i 's|vendorHash = .*|vendorHash = "";|' flake.nix
           
-          # Try to build and capture the expected hash
-          HASH=$(nix build .#vpngate 2>&1 | grep -oP "sha256-[a-zA-Z0-9+/]+={0,2}" | head -1)
+          # Try to build and extract the expected hash from error message
+          BUILD_OUTPUT=$(nix build .#vpngate 2>&1 || true)
+          HASH=$(echo "$BUILD_OUTPUT" | grep -oP 'got:\s*\K(sha256-[a-zA-Z0-9+/]+={0,2})' | head -1)
           
           if [ -z "$HASH" ]; then
+            echo "Build output:"
+            echo "$BUILD_OUTPUT"
             echo "Failed to extract hash from build output"
             exit 1
           fi
@@ -39,7 +42,7 @@ jobs:
 
       - name: Update flake.nix with correct hash
         run: |
-          sed -i 's/vendorHash = null;/vendorHash = "${{ steps.hash.outputs.hash }}";/' flake.nix
+          sed -i "s|vendorHash = \"\";|vendorHash = \"${{ steps.hash.outputs.hash }}\";|" flake.nix
 
       - name: Commit and push if changed
         run: |
