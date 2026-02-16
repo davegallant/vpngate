@@ -4,37 +4,42 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
-
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/afero"
 )
 
 const serverCachefile = "servers.json"
 
-func getCacheDir() string {
+func getCacheDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Error().Msgf("Failed to get user's home directory: %s ", err)
-		return ""
+		return "", err
 	}
-	cacheDir := path.Join(homeDir, ".vpngate", "cache")
-	return cacheDir
+	cacheDir := filepath.Join(homeDir, ".vpngate", "cache")
+	return cacheDir, nil
 }
 
 func createCacheDir() error {
-	cacheDir := getCacheDir()
-	AppFs := afero.NewOsFs()
-	return AppFs.MkdirAll(cacheDir, 0o700)
+	cacheDir, err := getCacheDir()
+	if err != nil {
+		return err
+	}
+	return os.MkdirAll(cacheDir, 0o700)
 }
 
 func getVpnListCache() (*[]Server, error) {
-	cacheFile := path.Join(getCacheDir(), serverCachefile)
+	cacheDir, err := getCacheDir()
+	if err != nil {
+		return nil, err
+	}
+	cacheFile := filepath.Join(cacheDir, serverCachefile)
 	serversFile, err := os.Open(cacheFile)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = serversFile.Close()
+	}()
 
 	byteValue, err := io.ReadAll(serversFile)
 	if err != nil {
@@ -44,7 +49,6 @@ func getVpnListCache() (*[]Server, error) {
 	var servers []Server
 
 	err = json.Unmarshal(byteValue, &servers)
-
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +57,7 @@ func getVpnListCache() (*[]Server, error) {
 }
 
 func writeVpnListToCache(servers []Server) error {
-	err := createCacheDir()
-	if err != nil {
+	if err := createCacheDir(); err != nil {
 		return err
 	}
 
@@ -63,20 +66,26 @@ func writeVpnListToCache(servers []Server) error {
 		return err
 	}
 
-	cacheFile := path.Join(getCacheDir(), serverCachefile)
+	cacheDir, err := getCacheDir()
+	if err != nil {
+		return err
+	}
+	cacheFile := filepath.Join(cacheDir, serverCachefile)
 
-	err = os.WriteFile(cacheFile, f, 0o644)
-
-	return err
+	return os.WriteFile(cacheFile, f, 0o644)
 }
 
 func vpnListCacheIsExpired() bool {
-	file, err := os.Stat(path.Join(getCacheDir(), serverCachefile))
+	cacheDir, err := getCacheDir()
+	if err != nil {
+		return true
+	}
+	file, err := os.Stat(filepath.Join(cacheDir, serverCachefile))
 	if err != nil {
 		return true
 	}
 
 	lastModified := file.ModTime()
 
-	return (time.Since(lastModified)) > time.Duration(24*time.Hour)
+	return time.Since(lastModified) > 24*time.Hour
 }

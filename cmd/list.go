@@ -27,7 +27,6 @@ var listCmd = &cobra.Command{
 		vpnServers, err := vpn.GetList(flagProxy, flagSocks5Proxy)
 		if err != nil {
 			log.Fatal().Msg(err.Error())
-			os.Exit(1)
 		}
 
 		table := tw.NewWriter(os.Stdout)
@@ -37,13 +36,11 @@ var listCmd = &cobra.Command{
 			err := table.Append([]string{strconv.Itoa(i + 1), v.HostName, v.CountryLong, v.Ping, strconv.Itoa(v.Score)})
 			if err != nil {
 				log.Fatal().Msg(err.Error())
-				os.Exit(1)
 			}
 		}
 		err = table.Render()
 		if err != nil {
 			log.Fatal().Msg(err.Error())
-			os.Exit(1)
 		}
 	},
 }
