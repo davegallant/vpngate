@@ -60,57 +60,213 @@ source ~/.profile
 
 > If on macOS, you may need to add openvpn to your PATH (if you installed it with brew): `export PATH=$(brew --prefix openvpn)/sbin:$PATH`
 
-### List available servers
+<!-- cobra:docs:start -->
+### vpngate
 
-```shell
-vpngate list
+vpngate is a client for vpngate.net
+
+```
+vpngate [flags]
 ```
 
-### Connect to a server
+#### Options
 
-Because openvpn creates a network interface, run the connect command with `sudo` or a user with escalated privileges.
-
-```shell
-sudo vpngate connect
+```
+  -h, --help   help for vpngate
 ```
 
-#### Reconnect
+### vpngate completion
 
-To continually attempt to reconnect (this can be combined with `--random`):
+Generate the autocompletion script for the specified shell
 
-```shell
-sudo vpngate connect --reconnect
+#### Synopsis
+
+Generate the autocompletion script for vpngate for the specified shell.
+See each sub-command's help for details on how to use the generated script.
+
+
+#### Options
+
+```
+  -h, --help   help for completion
 ```
 
-#### Random
+### vpngate completion bash
 
-If the country doesn't matter, a random server can be selected:
+Generate the autocompletion script for bash
 
-```shell
-sudo vpngate connect --random
+#### Synopsis
+
+Generate the autocompletion script for the bash shell.
+
+This script depends on the 'bash-completion' package.
+If it is not installed already, you can install it via your OS's package manager.
+
+To load completions in your current shell session:
+
+	source <(vpngate completion bash)
+
+To load completions for every new session, execute once:
+
+##### Linux:
+
+	vpngate completion bash > /etc/bash_completion.d/vpngate
+
+##### macOS:
+
+	vpngate completion bash > $(brew --prefix)/etc/bash_completion.d/vpngate
+
+You will need to start a new shell for this setup to take effect.
+
+
+```
+vpngate completion bash
 ```
 
-#### Proxy
+#### Options
 
-In some cases, anonymity is necessary to populate the list of available VPN servers.
-
-A proxy is a way to bypass restrictions and in some cases, internet censorship.
-
-##### HTTP/HTTPS
-
-Use the specified HTTP/HTTPS proxy to fetch the server list.
-
-```shell
-sudo vpngate connect --proxy "http://localhost:8080"
+```
+  -h, --help              help for bash
+      --no-descriptions   disable completion descriptions
 ```
 
-##### SOCKS5
+### vpngate completion fish
 
-Use the specified SOCKS5 proxy to fetch the server list.
+Generate the autocompletion script for fish
 
-```shell
-sudo vpngate connect --socks5 "127.0.0.1:1080"
+#### Synopsis
+
+Generate the autocompletion script for the fish shell.
+
+To load completions in your current shell session:
+
+	vpngate completion fish | source
+
+To load completions for every new session, execute once:
+
+	vpngate completion fish > ~/.config/fish/completions/vpngate.fish
+
+You will need to start a new shell for this setup to take effect.
+
+
 ```
+vpngate completion fish [flags]
+```
+
+#### Options
+
+```
+  -h, --help              help for fish
+      --no-descriptions   disable completion descriptions
+```
+
+### vpngate completion powershell
+
+Generate the autocompletion script for powershell
+
+#### Synopsis
+
+Generate the autocompletion script for powershell.
+
+To load completions in your current shell session:
+
+	vpngate completion powershell | Out-String | Invoke-Expression
+
+To load completions for every new session, add the output of the above command
+to your powershell profile.
+
+
+```
+vpngate completion powershell [flags]
+```
+
+#### Options
+
+```
+  -h, --help              help for powershell
+      --no-descriptions   disable completion descriptions
+```
+
+### vpngate completion zsh
+
+Generate the autocompletion script for zsh
+
+#### Synopsis
+
+Generate the autocompletion script for the zsh shell.
+
+If shell completion is not already enabled in your environment you will need
+to enable it.  You can execute the following once:
+
+	echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+To load completions in your current shell session:
+
+	source <(vpngate completion zsh)
+
+To load completions for every new session, execute once:
+
+##### Linux:
+
+	vpngate completion zsh > "${fpath[1]}/_vpngate"
+
+##### macOS:
+
+	vpngate completion zsh > $(brew --prefix)/share/zsh/site-functions/_vpngate
+
+You will need to start a new shell for this setup to take effect.
+
+
+```
+vpngate completion zsh [flags]
+```
+
+#### Options
+
+```
+  -h, --help              help for zsh
+      --no-descriptions   disable completion descriptions
+```
+
+### vpngate connect
+
+Connect to a vpn server (survey selection appears if hostname is not provided)
+
+#### Synopsis
+
+Connect to a vpn from a list of relay servers. Because openvpn creates a network interface, run the connect command with 'sudo' or a user with escalated privileges.
+
+```
+vpngate connect [flags]
+```
+
+#### Options
+
+```
+  -h, --help            help for connect
+  -p, --proxy string    provide a http/https proxy server to make requests through (i.e. http://127.0.0.1:8080)
+  -r, --random          connect to a random server
+  -t, --reconnect       continually attempt to connect to the server
+  -s, --socks5 string   provide a socks5 proxy server to make requests through (i.e. 127.0.0.1:1080)
+```
+
+### vpngate list
+
+List all available vpn servers
+
+```
+vpngate list [flags]
+```
+
+#### Options
+
+```
+  -h, --help            help for list
+  -p, --proxy string    provide a http/https proxy server to make requests through (i.e. http://127.0.0.1:8080)
+  -s, --socks5 string   provide a socks5 proxy server to make requests through (i.e. 127.0.0.1:1080)
+```
+
+<!-- cobra:docs:end -->
 
 ## Notes
 
