@@ -27,7 +27,7 @@ jobs:
         run: go run main.go docs --path README.md
 
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "docs: update usage documentation [skip ci]"
           file_pattern: README.md
