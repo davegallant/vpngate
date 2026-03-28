@@ -9,7 +9,7 @@ require (
 	github.com/jszwec/csvutil v1.10.0
 	github.com/juju/errors v1.0.0
 	github.com/olekukonko/tablewriter v1.1.4
-	github.com/rs/zerolog v1.34.0
+	github.com/rs/zerolog v1.35.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.52.0
