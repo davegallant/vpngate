@@ -15,7 +15,7 @@
     let
       vpngate =
         pkgs:
-        pkgs.buildGo125Module rec {
+        pkgs.buildGo126Module rec {
           name = "vpngate";
           src = ./.;
           vendorHash = "sha256-38ldOSg+7U0JzkK+tNEQPF5ZOGepyV2s4jQxI3wvhEg=";
