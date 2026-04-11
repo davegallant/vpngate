@@ -2,7 +2,7 @@ module github.com/davegallant/vpngate
 
 go 1.25.0
 
-toolchain go1.26.1
+toolchain go1.26.2
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
