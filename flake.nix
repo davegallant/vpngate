@@ -3,19 +3,23 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-    }:
+    { self, nixpkgs }:
     let
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+
+      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
+
       vpngate =
         pkgs:
-        pkgs.buildGo126Module rec {
+        pkgs.buildGo126Module {
           name = "vpngate";
           src = ./.;
           vendorHash = "sha256-38ldOSg+7U0JzkK+tNEQPF5ZOGepyV2s4jQxI3wvhEg=";
@@ -23,21 +27,28 @@
           env.CGO_ENABLED = 0;
           doCheck = false;
         };
-
-      flakeForSystem =
-        nixpkgs: system:
+    in
+    {
+      packages = forAllSystems (
+        system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
           vg = vpngate pkgs;
         in
         {
-          packages = {
-            default = vg;
-            vpngate = vg;
-          };
-          devShells.default = pkgs.mkShell {
+          default = vg;
+          vpngate = vg;
+        }
+      );
+
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShell {
             name = "vpngate-dev";
-            description = "Development environment for vpngate";
             packages = with pkgs; [
               go_1_26
               gopls
@@ -49,7 +60,7 @@
               go version
             '';
           };
-        };
-    in
-    flake-utils.lib.eachDefaultSystem (system: flakeForSystem nixpkgs system);
+        }
+      );
+    };
 }
