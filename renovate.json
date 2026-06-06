@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "schedule": [
-    "every weekend"
+    "on the 1st day of the month"
   ],
   "packageRules": [
     {
