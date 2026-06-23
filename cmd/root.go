@@ -7,9 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const version = "0.4.0"
+
 var rootCmd = &cobra.Command{
-	Use:   "vpngate",
-	Short: "vpngate is a client for vpngate.net",
+	Use:     "vpngate",
+	Short:   "vpngate is a client for vpngate.net",
+	Version: version,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			_ = cmd.Help()

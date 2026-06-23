@@ -60,6 +60,45 @@ source ~/.profile
 
 > If on macOS, you may need to add openvpn to your PATH (if you installed it with brew): `export PATH=$(brew --prefix openvpn)/sbin:$PATH`
 
+### Examples
+
+List Japanese servers sorted by lowest ping:
+
+```shell
+vpngate list --country Japan --sort ping
+```
+
+List high-scoring US servers as JSON:
+
+```shell
+vpngate list --country us --min-score 1000000 --output json
+```
+
+Connect to a random server with quality filters:
+
+```shell
+sudo vpngate connect --random --country Japan --max-ping 100 --min-score 500000
+```
+
+Refresh the cached server list before listing:
+
+```shell
+vpngate list --refresh
+```
+
+Bypass the cache entirely:
+
+```shell
+vpngate list --no-cache
+```
+
+Inspect or clear the cache:
+
+```shell
+vpngate cache path
+vpngate cache clear
+```
+
 <!-- cobra:docs:start -->
 ### vpngate
 
@@ -73,6 +112,44 @@ vpngate [flags]
 
 ```
   -h, --help   help for vpngate
+```
+
+### vpngate cache
+
+Manage cached vpn server data
+
+#### Options
+
+```
+  -h, --help   help for cache
+```
+
+### vpngate cache clear
+
+Clear cached vpn server data
+
+```
+vpngate cache clear [flags]
+```
+
+#### Options
+
+```
+  -h, --help   help for clear
+```
+
+### vpngate cache path
+
+Print the cache directory path
+
+```
+vpngate cache path [flags]
+```
+
+#### Options
+
+```
+  -h, --help   help for path
 ```
 
 ### vpngate completion
@@ -243,11 +320,16 @@ vpngate connect [flags]
 #### Options
 
 ```
-  -h, --help            help for connect
-  -p, --proxy string    provide a http/https proxy server to make requests through (i.e. http://127.0.0.1:8080)
-  -r, --random          connect to a random server
-  -t, --reconnect       continually attempt to connect to the server
-  -s, --socks5 string   provide a socks5 proxy server to make requests through (i.e. 127.0.0.1:1080)
+      --country string   filter by country name or country code (i.e. Japan or jp)
+  -h, --help             help for connect
+      --max-ping int     filter out servers with ping higher than this value
+      --min-score int    filter out servers with score lower than this value
+      --no-cache         do not read from or write to the vpn server list cache
+  -p, --proxy string     provide a http/https proxy server to make requests through (i.e. http://127.0.0.1:8080)
+  -r, --random           connect to a random server
+  -t, --reconnect        continually attempt to connect to the server
+      --refresh          refresh the vpn server list cache before connecting
+  -s, --socks5 string    provide a socks5 proxy server to make requests through (i.e. 127.0.0.1:1080)
 ```
 
 ### vpngate list
@@ -261,9 +343,16 @@ vpngate list [flags]
 #### Options
 
 ```
-  -h, --help            help for list
-  -p, --proxy string    provide a http/https proxy server to make requests through (i.e. http://127.0.0.1:8080)
-  -s, --socks5 string   provide a socks5 proxy server to make requests through (i.e. 127.0.0.1:1080)
+      --country string   filter by country name or country code (i.e. Japan or jp)
+  -h, --help             help for list
+      --max-ping int     filter out servers with ping higher than this value
+      --min-score int    filter out servers with score lower than this value
+      --no-cache         do not read from or write to the vpn server list cache
+  -o, --output string    output format: table, json, csv (default "table")
+  -p, --proxy string     provide a http/https proxy server to make requests through (i.e. http://127.0.0.1:8080)
+      --refresh          refresh the vpn server list cache before listing
+  -s, --socks5 string    provide a socks5 proxy server to make requests through (i.e. 127.0.0.1:1080)
+      --sort string      sort by one of none, score, ping, country, hostname (default "none")
 ```
 
 <!-- cobra:docs:end -->

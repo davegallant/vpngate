@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+- Add server filtering by country, maximum ping, and minimum score to list and connect commands.
+- Add list sorting by score, ping, country, or hostname.
+- Add JSON and CSV output formats for the list command.
+- Add cache controls with refresh/no-cache flags and cache management commands.
+- Improve interactive server selection labels with aligned hostname, country, IP, ping, and score details.
+- Add usage examples for filtering, sorting, cache controls, and random filtered connections.
+
 ## 0.3.5
 
 - chore: update vendorHash in flake.nix (7948580)

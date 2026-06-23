@@ -26,6 +26,11 @@ func init() {
 	connectCmd.Flags().BoolVarP(&flagReconnect, "reconnect", "t", false, "continually attempt to connect to the server")
 	connectCmd.Flags().StringVarP(&flagProxy, "proxy", "p", "", "provide a http/https proxy server to make requests through (i.e. http://127.0.0.1:8080)")
 	connectCmd.Flags().StringVarP(&flagSocks5Proxy, "socks5", "s", "", "provide a socks5 proxy server to make requests through (i.e. 127.0.0.1:1080)")
+	connectCmd.Flags().StringVar(&flagCountry, "country", "", "filter by country name or country code (i.e. Japan or jp)")
+	connectCmd.Flags().IntVar(&flagMaxPing, "max-ping", 0, "filter out servers with ping higher than this value")
+	connectCmd.Flags().IntVar(&flagMinScore, "min-score", 0, "filter out servers with score lower than this value")
+	connectCmd.Flags().BoolVar(&flagRefresh, "refresh", false, "refresh the vpn server list cache before connecting")
+	connectCmd.Flags().BoolVar(&flagNoCache, "no-cache", false, "do not read from or write to the vpn server list cache")
 	rootCmd.AddCommand(connectCmd)
 }
 
@@ -35,18 +40,18 @@ var connectCmd = &cobra.Command{
 	Long:  `Connect to a vpn from a list of relay servers. Because openvpn creates a network interface, run the connect command with 'sudo' or a user with escalated privileges.`,
 	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
-		vpnServers, err := vpn.GetList(flagProxy, flagSocks5Proxy)
+		vpnServers, err := vpn.GetListWithOptions(flagProxy, flagSocks5Proxy, vpn.ListOptions{Refresh: flagRefresh, NoCache: flagNoCache})
 		if err != nil {
 			log.Fatal().Msg(err.Error())
 		}
 
-		// Build server selection options and hostname lookup map
-		serverSelection := make([]string, len(*vpnServers))
-		serverMap := make(map[string]vpn.Server, len(*vpnServers))
-		for i, s := range *vpnServers {
-			serverSelection[i] = fmt.Sprintf("%s (%s)", s.HostName, s.CountryLong)
-			serverMap[s.HostName] = s
+		vpnServers = filterServers(vpnServers)
+		if len(*vpnServers) == 0 {
+			log.Fatal().Msg("No vpn servers matched the provided filters")
 		}
+
+		// Build rich server selection options and lookup map.
+		serverSelection, serverMap := buildServerSelection(*vpnServers)
 
 		selection := ""
 		var serverSelected vpn.Server
@@ -65,9 +70,10 @@ var connectCmd = &cobra.Command{
 				}
 			}
 
-			// Lookup server from selection using map for O(1) lookup
-			hostname := extractHostname(selection)
-			if server, exists := serverMap[hostname]; exists {
+			// Lookup server from selection using map for O(1) lookup.
+			if server, exists := serverMap[selection]; exists {
+				serverSelected = server
+			} else if server, exists := serverMap[extractHostname(selection)]; exists {
 				serverSelected = server
 			} else {
 				log.Fatal().Msgf("Server '%s' was not found", selection)
@@ -114,11 +120,60 @@ var connectCmd = &cobra.Command{
 	},
 }
 
-// extractHostname extracts the hostname from the selection string (format: "hostname (country)")
+func buildServerSelection(servers []vpn.Server) ([]string, map[string]vpn.Server) {
+	hostnameWidth := len("Hostname")
+	countryWidth := len("Country")
+	for _, server := range servers {
+		if len(server.HostName) > hostnameWidth {
+			hostnameWidth = len(server.HostName)
+		}
+		if len(server.CountryLong) > countryWidth {
+			countryWidth = len(server.CountryLong)
+		}
+	}
+
+	serverSelection := make([]string, len(servers))
+	serverMap := make(map[string]vpn.Server, len(servers)*2)
+	for i, server := range servers {
+		label := formatServerSelection(server, hostnameWidth, countryWidth)
+		serverSelection[i] = label
+		serverMap[label] = server
+		serverMap[server.HostName] = server
+	}
+
+	return serverSelection, serverMap
+}
+
+func formatServerSelection(server vpn.Server, hostnameWidth int, countryWidth int) string {
+	return fmt.Sprintf(
+		"%-*s  %-*s  %-15s  ping %s",
+		hostnameWidth,
+		server.HostName,
+		countryWidth,
+		server.CountryLong,
+		server.IPAddr,
+		server.Ping,
+	)
+}
+
+// extractHostname extracts the hostname from a manually provided argument or legacy selection string.
 func extractHostname(selection string) string {
-	parts := strings.Split(selection, " (")
+	selection = strings.TrimSpace(selection)
+
+	parts := strings.Split(selection, " | ")
+	if len(parts) > 0 {
+		selection = strings.TrimSpace(parts[0])
+	}
+
+	parts = strings.Split(selection, " (")
+	if len(parts) > 0 {
+		selection = strings.TrimSpace(parts[0])
+	}
+
+	parts = strings.Fields(selection)
 	if len(parts) > 0 {
 		return parts[0]
 	}
+
 	return selection
 }

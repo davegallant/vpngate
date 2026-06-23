@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	vpnList            = "https://www.vpngate.net/api/iphone/"
-	httpClientTimeout  = 30 * time.Second
-	dialTimeout        = 10 * time.Second
+	vpnList           = "https://www.vpngate.net/api/iphone/"
+	httpClientTimeout = 30 * time.Second
+	dialTimeout       = 10 * time.Second
 )
 
 // Server holds information about a vpn relay server
@@ -120,17 +120,32 @@ func createHTTPClient(httpProxy string, socks5Proxy string) (*http.Client, error
 	}, nil
 }
 
-// GetList returns a list of vpn servers
+// ListOptions controls how the vpn server list is fetched.
+type ListOptions struct {
+	Refresh bool
+	NoCache bool
+}
+
+// GetList returns a list of vpn servers.
 func GetList(httpProxy string, socks5Proxy string) (*[]Server, error) {
+	return GetListWithOptions(httpProxy, socks5Proxy, ListOptions{})
+}
+
+// GetListWithOptions returns a list of vpn servers with cache controls.
+func GetListWithOptions(httpProxy string, socks5Proxy string, opts ListOptions) (*[]Server, error) {
 	cacheExpired := vpnListCacheIsExpired()
 
-	// Try to use cached list if not expired
-	if !cacheExpired {
+	// Try to use cached list if not expired, unless explicitly bypassed.
+	if !opts.Refresh && !opts.NoCache && !cacheExpired {
 		servers, err := getVpnListCache()
 		if err == nil {
 			return servers, nil
 		}
 		log.Info().Msg("Unable to retrieve vpn list from cache")
+	} else if opts.Refresh {
+		log.Info().Msg("Refreshing the vpn server list")
+	} else if opts.NoCache {
+		log.Info().Msg("Bypassing the vpn server list cache")
 	} else {
 		log.Info().Msg("The vpn server list cache has expired")
 	}
@@ -164,10 +179,12 @@ func GetList(httpProxy string, socks5Proxy string) (*[]Server, error) {
 
 		servers = parsedServers
 
-		// Cache the servers for future use
-		cacheErr := writeVpnListToCache(*servers)
-		if cacheErr != nil {
-			log.Warn().Msgf("Unable to write servers to cache: %s", cacheErr)
+		// Cache the servers for future use, unless caching is disabled.
+		if !opts.NoCache {
+			cacheErr := writeVpnListToCache(*servers)
+			if cacheErr != nil {
+				log.Warn().Msgf("Unable to write servers to cache: %s", cacheErr)
+			}
 		}
 		return nil
 	})

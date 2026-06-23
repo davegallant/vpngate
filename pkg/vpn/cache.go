@@ -10,13 +10,18 @@ import (
 
 const serverCachefile = "servers.json"
 
-func getCacheDir() (string, error) {
+// CacheDir returns the directory used for vpngate cache files.
+func CacheDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
 	cacheDir := filepath.Join(homeDir, ".vpngate", "cache")
 	return cacheDir, nil
+}
+
+func getCacheDir() (string, error) {
+	return CacheDir()
 }
 
 func createCacheDir() error {
@@ -54,6 +59,15 @@ func getVpnListCache() (*[]Server, error) {
 	}
 
 	return &servers, nil
+}
+
+// ClearCache removes cached vpngate data.
+func ClearCache() error {
+	cacheDir, err := getCacheDir()
+	if err != nil {
+		return err
+	}
+	return os.RemoveAll(cacheDir)
 }
 
 func writeVpnListToCache(servers []Server) error {
