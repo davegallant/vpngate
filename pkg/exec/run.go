@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"os/exec"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 )
@@ -41,19 +42,41 @@ func Run(path string, workDir string, args ...string) error {
 		return err
 	}
 
-	// Combine stdout and stderr into a single reader
-	combined := io.MultiReader(stdout, stderr)
-	scanner := bufio.NewScanner(combined)
-	for scanner.Scan() {
-		log.Debug().Msg(scanner.Text())
-	}
+	// stdout and stderr must be drained concurrently: reading them
+	// sequentially (e.g. via io.MultiReader) can deadlock the child if it
+	// fills the unread pipe's OS buffer before the read one reaches EOF.
+	var wg sync.WaitGroup
+	var stdoutErr, stderrErr error
 
-	if err := scanner.Err(); err != nil {
-		log.Error().Msgf("Error reading output: %v", err)
-		return err
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		stdoutErr = logLines(stdout)
+	}()
+	go func() {
+		defer wg.Done()
+		stderrErr = logLines(stderr)
+	}()
+	wg.Wait()
+
+	if stdoutErr != nil {
+		log.Error().Msgf("Error reading stdout: %v", stdoutErr)
+		return stdoutErr
+	}
+	if stderrErr != nil {
+		log.Error().Msgf("Error reading stderr: %v", stderrErr)
+		return stderrErr
 	}
 
 	// cmd.Wait() returns an error if the command exits with non-zero status
 	// We return this without logging since it's expected behavior for some commands
 	return cmd.Wait()
+}
+
+func logLines(r io.Reader) error {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		log.Debug().Msg(scanner.Text())
+	}
+	return scanner.Err()
 }
