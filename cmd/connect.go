@@ -97,10 +97,13 @@ var connectCmd = &cobra.Command{
 			}
 
 			if _, err := tmpfile.Write(decodedConfig); err != nil {
+				_ = tmpfile.Close()
+				_ = os.Remove(tmpfile.Name())
 				log.Fatal().Msg(err.Error())
 			}
 
 			if err := tmpfile.Close(); err != nil {
+				_ = os.Remove(tmpfile.Name())
 				log.Fatal().Msg(err.Error())
 			}
 
