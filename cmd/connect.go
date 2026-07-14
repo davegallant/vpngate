@@ -39,15 +39,15 @@ var connectCmd = &cobra.Command{
 	Short: "Connect to a vpn server (survey selection appears if hostname is not provided)",
 	Long:  `Connect to a vpn from a list of relay servers. Because openvpn creates a network interface, run the connect command with 'sudo' or a user with escalated privileges.`,
 	Args:  cobra.RangeArgs(0, 1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		vpnServers, err := vpn.GetListWithOptions(flagProxy, flagSocks5Proxy, vpn.ListOptions{Refresh: flagRefresh, NoCache: flagNoCache})
 		if err != nil {
-			log.Fatal().Msg(err.Error())
+			return err
 		}
 
 		vpnServers = filterServers(vpnServers)
 		if len(*vpnServers) == 0 {
-			log.Fatal().Msg("No vpn servers matched the provided filters")
+			return fmt.Errorf("no vpn servers matched the provided filters")
 		}
 
 		// Build rich server selection options and lookup map.
@@ -64,9 +64,8 @@ var connectCmd = &cobra.Command{
 					Message: "Choose a server:",
 					Options: serverSelection,
 				}
-				err := survey.AskOne(prompt, &selection, survey.WithPageSize(10))
-				if err != nil {
-					log.Fatal().Msg("Unable to obtain hostname from survey")
+				if err := survey.AskOne(prompt, &selection, survey.WithPageSize(10)); err != nil {
+					return fmt.Errorf("unable to obtain hostname from survey: %w", err)
 				}
 			}
 
@@ -76,7 +75,7 @@ var connectCmd = &cobra.Command{
 			} else if server, exists := serverMap[extractHostname(selection)]; exists {
 				serverSelected = server
 			} else {
-				log.Fatal().Msgf("Server '%s' was not found", selection)
+				return fmt.Errorf("server %q was not found", selection)
 			}
 		}
 
@@ -88,23 +87,23 @@ var connectCmd = &cobra.Command{
 
 			decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
 			if err != nil {
-				log.Fatal().Msg(err.Error())
+				return err
 			}
 
 			tmpfile, err := os.CreateTemp("", "vpngate-openvpn-config-")
 			if err != nil {
-				log.Fatal().Msg(err.Error())
+				return err
 			}
 
 			if _, err := tmpfile.Write(decodedConfig); err != nil {
 				_ = tmpfile.Close()
 				_ = os.Remove(tmpfile.Name())
-				log.Fatal().Msg(err.Error())
+				return err
 			}
 
 			if err := tmpfile.Close(); err != nil {
 				_ = os.Remove(tmpfile.Name())
-				log.Fatal().Msg(err.Error())
+				return err
 			}
 
 			log.Info().Msgf("Connecting to %s (%s) in %s", serverSelected.HostName, serverSelected.IPAddr, serverSelected.CountryLong)
@@ -116,9 +115,9 @@ var connectCmd = &cobra.Command{
 
 			if !flagReconnect {
 				if err != nil {
-					log.Fatal().Msg("VPN connection failed")
+					return fmt.Errorf("vpn connection failed: %w", err)
 				}
-				return
+				return nil
 			}
 		}
 	},

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	tw "github.com/olekukonko/tablewriter"
-	"github.com/rs/zerolog/log"
 
 	"github.com/davegallant/vpngate/pkg/vpn"
 
@@ -30,18 +29,17 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all available vpn servers",
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := validateSortFlag(); err != nil {
-			log.Fatal().Msg(err.Error())
+			return err
 		}
 		if err := validateOutputFlag(); err != nil {
-			log.Fatal().Msg(err.Error())
+			return err
 		}
 
 		vpnServers, err := vpn.GetListWithOptions(flagProxy, flagSocks5Proxy, vpn.ListOptions{Refresh: flagRefresh, NoCache: flagNoCache})
 		if err != nil {
-			log.Fatal().Msg(err.Error())
+			return err
 		}
 
 		vpnServers = filterServers(vpnServers)
@@ -49,29 +47,19 @@ var listCmd = &cobra.Command{
 
 		switch strings.ToLower(flagOutput) {
 		case outputJSON:
-			if err := writeServersJSON(vpnServers); err != nil {
-				log.Fatal().Msg(err.Error())
-			}
-			return
+			return writeServersJSON(vpnServers)
 		case outputCSV:
-			if err := writeServersCSV(vpnServers); err != nil {
-				log.Fatal().Msg(err.Error())
-			}
-			return
+			return writeServersCSV(vpnServers)
 		}
 
 		table := tw.NewWriter(os.Stdout)
 		table.Header([]string{"#", "HostName", "Country", "Ping", "Score"})
 
 		for i, v := range *vpnServers {
-			err := table.Append([]string{strconv.Itoa(i + 1), v.HostName, v.CountryLong, v.Ping, strconv.Itoa(v.Score)})
-			if err != nil {
-				log.Fatal().Msg(err.Error())
+			if err := table.Append([]string{strconv.Itoa(i + 1), v.HostName, v.CountryLong, v.Ping, strconv.Itoa(v.Score)}); err != nil {
+				return err
 			}
 		}
-		err = table.Render()
-		if err != nil {
-			log.Fatal().Msg(err.Error())
-		}
+		return table.Render()
 	},
 }

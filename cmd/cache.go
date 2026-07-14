@@ -24,11 +24,12 @@ var cacheClearCmd = &cobra.Command{
 	Use:   "clear",
 	Short: "Clear cached vpn server data",
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := vpn.ClearCache(); err != nil {
-			log.Fatal().Msg(err.Error())
+			return err
 		}
 		log.Info().Msg("Cleared vpngate cache")
+		return nil
 	},
 }
 
@@ -36,11 +37,12 @@ var cachePathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "Print the cache directory path",
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cacheDir, err := vpn.CacheDir()
 		if err != nil {
-			log.Fatal().Msg(err.Error())
+			return err
 		}
 		fmt.Println(cacheDir)
+		return nil
 	},
 }
