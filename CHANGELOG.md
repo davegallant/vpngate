@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0
+
+- Fix a nil-pointer panic when the vpngate.net server list API returns a non-200 status code.
+- Fix the retry backoff between failed server-list fetch attempts, which was effectively instantaneous (1ns) instead of 1 second.
+- Fix `connect --reconnect` handling so a single connection attempt (without `--reconnect`) no longer loops forever after a clean disconnect.
+- Fix a potential deadlock when reading OpenVPN's stdout/stderr output.
+- Fix a leftover temporary OpenVPN config file when writing or closing it failed.
+- Return errors from CLI commands instead of calling `log.Fatal` directly, for cleaner and more consistent error output.
+- Update golang.org/x/net to v0.55.0 [security].
+- Add test coverage for retry logic and CLI helper functions.
+
 ## 0.4.0
 
 - Add server filtering by country, maximum ping, and minimum score to list and connect commands.
