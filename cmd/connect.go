@@ -108,14 +108,15 @@ var connectCmd = &cobra.Command{
 
 			err = vpn.Connect(tmpfile.Name())
 
-			if err != nil && !flagReconnect {
-				// VPN connection failed and reconnect is disabled
-				_ = os.Remove(tmpfile.Name())
-				log.Fatal().Msg("VPN connection failed")
-			}
-
 			// Always try to clean up temporary file
 			_ = os.Remove(tmpfile.Name())
+
+			if !flagReconnect {
+				if err != nil {
+					log.Fatal().Msg("VPN connection failed")
+				}
+				return
+			}
 		}
 	},
 }
