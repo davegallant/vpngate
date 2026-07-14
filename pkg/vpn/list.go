@@ -169,7 +169,7 @@ func GetListWithOptions(httpProxy string, socks5Proxy string, opts ListOptions) 
 		}()
 
 		if resp.StatusCode != http.StatusOK {
-			return errors.Annotatef(err, "Unexpected status code when retrieving vpn list: %d", resp.StatusCode)
+			return errors.Errorf("Unexpected status code when retrieving vpn list: %d", resp.StatusCode)
 		}
 
 		parsedServers, err := parseVpnList(resp.Body)
