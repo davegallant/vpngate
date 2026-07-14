@@ -18,12 +18,15 @@ import (
 )
 
 const (
-	vpnList           = "https://www.vpngate.net/api/iphone/"
 	httpClientTimeout = 30 * time.Second
 	dialTimeout       = 10 * time.Second
 	fetchRetryDelay   = time.Second
 	fetchRetryCount   = 5
 )
+
+// vpnList is the URL of the vpngate server list API. It is a var so tests
+// can point it at a local httptest.Server instead of the real endpoint.
+var vpnList = "https://www.vpngate.net/api/iphone/"
 
 // Server holds information about a vpn relay server
 type Server struct {
