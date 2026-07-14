@@ -21,6 +21,8 @@ const (
 	vpnList           = "https://www.vpngate.net/api/iphone/"
 	httpClientTimeout = 30 * time.Second
 	dialTimeout       = 10 * time.Second
+	fetchRetryDelay   = time.Second
+	fetchRetryCount   = 5
 )
 
 // Server holds information about a vpn relay server
@@ -159,7 +161,7 @@ func GetListWithOptions(httpProxy string, socks5Proxy string, opts ListOptions) 
 
 	var servers *[]Server
 
-	err = util.Retry(5, 1, func() error {
+	err = util.Retry(fetchRetryCount, fetchRetryDelay, func() error {
 		resp, err := client.Get(vpnList)
 		if err != nil {
 			return err
