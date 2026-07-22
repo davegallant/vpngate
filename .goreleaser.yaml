@@ -27,6 +27,10 @@ builds:
     ldflags:
       - -s -w
     mod_timestamp: "{{ .CommitTimestamp }}"
+archives:
+  - format_overrides:
+      - goos: windows
+        formats: ["zip"]
 checksum:
   name_template: "checksums.txt"
 snapshot:
@@ -54,3 +58,36 @@ brews:
     repository:
       owner: davegallant
       name: homebrew-public
+
+# Check https://goreleaser.com/customization/winget/
+winget:
+  - name: vpngate
+    publisher: davegallant
+    package_identifier: davegallant.vpngate
+    short_description: "a client for vpngate.net"
+    license: "GPL-3.0-or-later"
+    license_url: "https://github.com/davegallant/vpngate/blob/main/LICENSE"
+    homepage: "https://github.com/davegallant/vpngate"
+    commit_author:
+      name: davegallant
+      email: davegallant@gmail.com
+    tags:
+      - vpn
+      - openvpn
+      - cli
+    dependencies:
+      - package_identifier: OpenVPNTechnologies.OpenVPN
+    # Dry run only: writes the manifest to dist/ but does not push or open a
+    # PR. Flip to false once davegallant/winget-pkgs and the release token
+    # are confirmed to work end to end.
+    skip_upload: true
+    repository:
+      owner: davegallant
+      name: winget-pkgs
+      branch: "{{.ProjectName}}-{{.Version}}"
+      pull_request:
+        enabled: true
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
