@@ -22,13 +22,31 @@ tear down that background connection.
 ### New package `pkg/daemon`
 
 - `State` struct + `Save`/`Load`/`Remove` — JSON file at
-  `~/.vpngate/state.json` holding: supervisor PID, management host:port,
-  connected server (hostname/IP/country), config file path, log file
-  path, started-at timestamp.
+  `os.TempDir()/vpngate/state.json` (not `~/.vpngate/`: `$HOME` is
+  unreliable under `sudo`, which would make `status`/`disconnect` look in
+  the wrong place when run without `sudo`; `os.TempDir()` is stable
+  across that and matches the already-agreed "dies on reboot" scope).
+  Holds: supervisor PID, **control** host:port (see below), connected
+  server (hostname/IP/country), config file path, log file path,
+  started-at timestamp.
 - `Management` client — minimal client for openvpn's plaintext management
   protocol over TCP: `Connect()`, `State()` (parses the `>STATE:` line for
   CONNECTING/CONNECTED/RECONNECTING/EXITING), `Disconnect()` (sends
-  `signal SIGTERM`).
+  `signal SIGTERM`). **Used only internally by the supervisor** — it is
+  the sole client of openvpn's management socket; external commands never
+  connect to it directly.
+- `Control` server/client — a second, separate loopback TCP socket that
+  the *supervisor itself* listens on (not openvpn). Speaks a tiny
+  line protocol: `STATUS` (supervisor replies with current state, server
+  info, uptime by querying its own `Management` client) and `STOP`
+  (supervisor sets an internal "stopping" flag, tells openvpn to exit via
+  `Management.Disconnect()`, waits for it to exit, removes state, then
+  exits itself). This exists because signaling openvpn's management
+  socket directly can't distinguish "the user asked to disconnect" from
+  "openvpn died and the `--reconnect` loop should respawn it" — only the
+  supervisor knows which one is happening. It also sidesteps Windows not
+  supporting arbitrary-process `SIGTERM`: `status`/`disconnect` always
+  talk over TCP to the control port, never signal a PID directly.
 - `Spawn`/`Detach` helpers — OS-specific process detachment, split into
   `spawn_unix.go` (`SysProcAttr{Setsid: true}`) and `spawn_windows.go`
   (`CreationFlags: CREATE_NEW_PROCESS_GROUP|DETACHED_PROCESS`), matching
@@ -54,9 +72,9 @@ tear down that background connection.
 
 ### New `cmd/status.go` and `cmd/disconnect.go`
 
-Thin commands that call into `pkg/daemon`: load state, query/signal the
-management socket, print the result (or `Not connected.`), remove state
-on disconnect.
+Thin commands that call into `pkg/daemon`: load state, send `STATUS` or
+`STOP` to the supervisor's control socket, print the result (or
+`Not connected.`).
 
 ## Data flow
 
@@ -64,28 +82,34 @@ on disconnect.
 
 1. Foreground process: fetch + filter server list, resolve selection
    (survey prompt or positional arg) — identical to today.
-2. Check `~/.vpngate/state.json`: if it exists and its PID is alive,
-   error out (`already connected to <host>, run 'vpngate disconnect'
-   first`).
+2. Check `os.TempDir()/vpngate/state.json`: if it exists and its PID is
+   alive, error out (`already connected to <host>, run 'vpngate
+   disconnect' first`).
 3. Re-exec self detached with `--__daemon-run <hostname>` + the original
    flags (`--reconnect`, `--random`, `--country`, `--proxy`, etc.) so the
    child can reproduce filtering if `--random` needs to reselect on
    reconnect.
-4. Child (supervisor): decode config to `~/.vpngate/config.ovpn`
-   (persistent, not a one-shot tempfile, so it survives across
-   reconnect-loop iterations), pick a free loopback port with
-   `net.Listen("tcp", "127.0.0.1:0")` then close it, start
-   `openvpn --management 127.0.0.1 <port> --config ... --data-ciphers
-   AES-128-CBC` with stdout/stderr redirected to `~/.vpngate/daemon.log`,
-   detached so it isn't killed if the parent's process group is
-   signaled.
-5. Child polls the management socket for `CONNECTED,SUCCESS` (falling
+4. Child (supervisor): decode config to
+   `os.TempDir()/vpngate/config.ovpn` (persistent, not a one-shot
+   tempfile, so it survives across reconnect-loop iterations). Open two
+   loopback listeners: the **control** socket (`net.Listen("tcp",
+   "127.0.0.1:0")`, kept open and served for the supervisor's whole
+   lifetime) and, per openvpn instance, a fresh **management** port
+   (opened-then-closed the same way to reserve a free port, then passed
+   to openvpn) — start `openvpn --management 127.0.0.1 <port> --config
+   ... --data-ciphers AES-128-CBC` with stdout/stderr redirected to
+   `os.TempDir()/vpngate/daemon.log`, detached so it isn't killed if the
+   parent's process group is signaled.
+5. Child polls its `Management` client for `CONNECTED,SUCCESS` (falling
    back to scanning the log for `Initialization Sequence Completed` if
-   management parsing misses it), then writes `state.json`.
+   management parsing misses it), then writes `state.json` (recording the
+   **control** address, not the per-instance management address).
 6. Child enters the existing reconnect loop (reused from current
-   `connect.go`): if `openvpn` exits and `--reconnect` was passed,
-   restart it (reselecting randomly if `--random`); otherwise clean up
-   `state.json`/config/log and exit.
+   `connect.go`): if `openvpn` exits and `--reconnect` was passed *and*
+   the supervisor wasn't told to stop, restart it on a newly-reserved
+   management port (reselecting randomly if `--random`); otherwise clean
+   up `state.json`/config/log and exit. The control listener from step 4
+   stays up across every iteration of this loop.
 7. Parent (still watching from step 3) sees `state.json` appear and
    prints success, or times out after ~30s and reports failure
    (surfacing the tail of `daemon.log`).
@@ -94,21 +118,24 @@ on disconnect.
 
 1. Load `state.json`. Missing → print `Not connected.`
 2. PID dead → stale file, remove it, print `Not connected.`
-3. Otherwise connect to the management port, send `state`, parse the
-   state line; print server, state (connected/reconnecting), uptime
-   (`now - startedAt`), PID. Socket unreachable but PID alive → print
-   `Status: unknown (management socket unreachable)` rather than failing
-   hard.
+3. Otherwise dial the control address and send `STATUS`; the supervisor
+   replies with its current state (queried from its own `Management`
+   client), server info, and uptime (`now - startedAt`). Print those.
+   Control socket unreachable but PID alive → print `Status: unknown
+   (control socket unreachable)` rather than failing hard.
 
 ### `vpngate disconnect`
 
 1. Load `state.json`. Missing → print `Not connected.`
-2. Send `signal SIGTERM` over the management socket for a clean shutdown
-   (lets openvpn tear down the tun interface properly); poll for the PID
-   to exit, up to ~5s.
-3. If it doesn't exit in time (or the socket's unreachable), fall back to
-   killing the PID directly.
-4. Remove `state.json`, `config.ovpn`. Print `Disconnected.`
+2. Dial the control address and send `STOP`. The supervisor sets its
+   "stopping" flag (so the reconnect loop won't respawn), signals openvpn
+   to exit via its `Management` client, waits for it to exit, removes
+   `state.json`/`config.ovpn`, and exits itself — `disconnect` waits for
+   that reply (or the socket closing) up to ~5s.
+3. If the control socket is unreachable (e.g. supervisor crashed
+   leaving a stale PID), fall back to killing the PID directly and
+   removing `state.json`/`config.ovpn` from the `disconnect` side.
+4. Print `Disconnected.`
 
 ## Error handling & edge cases
 
@@ -120,7 +147,7 @@ on disconnect.
 - **Stale state file** (process crashed/was killed outside vpngate, e.g.
   `kill -9` or reboot): detected via dead PID in both `status` and
   `disconnect`; auto-cleaned so the user isn't stuck manually deleting
-  `~/.vpngate/state.json`.
+  `os.TempDir()/vpngate/state.json`.
 - **openvpn fails to start** (bad config, permissions, port in use):
   supervisor detects early exit before reaching `CONNECTED`, cleans up,
   and the parent's 30s wait surfaces the failure with the tail of
@@ -128,7 +155,10 @@ on disconnect.
 - **Requires elevated privileges:** unchanged from today — since the
   supervisor is a re-exec of the same binary, it inherits whatever
   privilege `connect -d` itself was run under (e.g. still needs `sudo`).
-- **Concurrent `disconnect` calls / management socket races:** disconnect
+  `status`/`disconnect` themselves never need elevated privileges: they
+  only ever talk to the supervisor's control socket over loopback TCP,
+  which any local user can dial regardless of who owns the process.
+- **Concurrent `disconnect` calls / control-socket races:** disconnect
   is idempotent — a second call after state is already removed just
   prints `Not connected.`
 
@@ -137,9 +167,11 @@ on disconnect.
 - **Unit tests** (no real openvpn/network needed):
   - `pkg/daemon`: state file save/load/remove round-trip;
     management-protocol parsing against a fake TCP server that emits
-    canned `>STATE:` lines, including malformed/partial responses.
+    canned `>STATE:` lines, including malformed/partial responses;
+    control-protocol `STATUS`/`STOP` request-response against a real
+    `Control` server backed by a fake `Management` client.
   - `cmd/status`, `cmd/disconnect`: behavior against a fake state file +
-    fake management server (not-connected, connected, stale-PID,
+    fake control server (not-connected, connected, stale-PID,
     socket-unreachable cases).
 - **Manual verification** (real VPN connections can't run in
   CI/sandbox): `connect -d`, `status`, `disconnect` exercised by hand on
