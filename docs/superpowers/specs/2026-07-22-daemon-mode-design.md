@@ -175,18 +175,33 @@ Thin commands that call into `pkg/daemon`: load state, send `STATUS` or
   the control address, and that file is root-owned, mode `0600`, in a
   `0700` directory (see `Dir()` resolution note above) — so a non-root
   `status`/`disconnect` fails at that first read with a permission error,
-  not `ErrNotExist`. The alternative (world-readable state so non-root
-  callers could get past `Load()`) was rejected: it would leak the
-  control socket's port to any local user, and an unauthenticated control
-  protocol means anyone who can read that port can send `STOP` and drop
-  root's VPN. So `status`/`disconnect` require the same privileges as
-  `connect -d` — `sudo` on unix, elevated ("Run as Administrator") on
-  Windows — and `Load()`'s permission error is reported as "Not
-  connected, or insufficient permissions to check (try with sudo)"
-  rather than a raw OS error.
+  not `ErrNotExist`. Making state world-readable instead (so non-root
+  callers could get past `Load()`) was rejected as the wrong direction to
+  fix this in: it doesn't change the underlying exposure (see the control
+  socket gap below — the socket is on loopback TCP and discoverable by
+  port scan regardless of who can read the state file), it only makes
+  the *address* more convenient to find, and this project's threat model
+  is a single-user machine where openvpn already requires root. So
+  `status`/`disconnect` require the same privileges as `connect -d` —
+  `sudo` on unix, elevated ("Run as Administrator") on Windows — and
+  `Load()`'s permission error is reported as "Not connected, or
+  insufficient permissions to check (try with sudo)" rather than a raw OS
+  error.
 - **Concurrent `disconnect` calls / control-socket races:** disconnect
   is idempotent — a second call after state is already removed just
   prints `Not connected.`
+- **Known gap — control socket has no authentication:** it's a plain
+  loopback TCP listener (`127.0.0.1:<ephemeral port>`) with no credential
+  check on `STOP`/`STATUS`. Requiring root for `status`/`disconnect`
+  (above) does not close this — any local unprivileged process can port-
+  scan loopback and send `STOP\n` directly, without ever reading the
+  state file, to drop root's VPN. For this project's threat model (hobby
+  VPN client, single-user machines) that's low severity — disconnect
+  only, no traffic read, no escalation — and in the same class as the
+  orphaned-openvpn gap below, so not fixed in this iteration. The real
+  fix, if ever needed, is a Unix-domain socket (`0600`, inside the
+  root-only state dir) instead of TCP loopback: filesystem permissions
+  then actually gate access, and it isn't scannable.
 - **Known gap — orphaned openvpn on ungraceful supervisor death:** state
   records the *supervisor's* PID, not openvpn's. If the supervisor is
   killed directly (`kill -9`, OOM, crash) rather than told to stop via
