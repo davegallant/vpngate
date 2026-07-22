@@ -20,7 +20,7 @@ type State struct {
 
 // Save writes state to StatePath(), creating Dir() if needed.
 func Save(state State) error {
-	if err := os.MkdirAll(Dir(), 0o755); err != nil {
+	if err := os.MkdirAll(Dir(), 0o700); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(state, "", "  ")

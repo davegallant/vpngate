@@ -25,6 +25,14 @@ var statusCmd = &cobra.Command{
 				fmt.Println("Not connected.")
 				return nil
 			}
+			// daemon state is root-owned (openvpn itself requires root),
+			// so a non-root invocation hits a permission error here
+			// rather than "not exist" — report it plainly instead of a
+			// raw "permission denied" error.
+			if os.IsPermission(err) {
+				fmt.Println("Not connected, or insufficient permissions to check (try with sudo).")
+				return nil
+			}
 			return err
 		}
 

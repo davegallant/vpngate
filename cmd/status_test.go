@@ -54,6 +54,26 @@ func TestStatusStalePID(t *testing.T) {
 	assert.True(t, os.IsNotExist(err))
 }
 
+// TestStatusPermissionDenied simulates the real-world non-root case: a
+// root `connect -d` writes root-owned, 0600 state, and a non-root
+// `status` invocation gets EACCES from ReadFile, not ErrNotExist. Skips
+// under root, where chmod 0o000 doesn't actually deny access.
+func TestStatusPermissionDenied(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("permission checks don't apply when running as root")
+	}
+
+	t.Setenv(daemon.DirEnvVar, t.TempDir())
+
+	assert.NoError(t, daemon.Save(daemon.State{PID: os.Getpid(), HostName: "public-vpn-1"}))
+	assert.NoError(t, os.Chmod(daemon.StatePath(), 0o000))
+
+	out := captureStdout(t, func() {
+		assert.NoError(t, statusCmd.RunE(statusCmd, nil))
+	})
+	assert.Contains(t, out, "insufficient permissions")
+}
+
 func TestStatusConnected(t *testing.T) {
 	t.Setenv(daemon.DirEnvVar, t.TempDir())
 

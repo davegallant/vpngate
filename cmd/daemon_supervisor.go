@@ -64,7 +64,7 @@ func runSupervisor() error {
 		}
 	}
 
-	if err := os.MkdirAll(daemon.Dir(), 0o755); err != nil {
+	if err := os.MkdirAll(daemon.Dir(), 0o700); err != nil {
 		return err
 	}
 	logFile, err := os.OpenFile(daemon.LogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)

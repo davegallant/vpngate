@@ -26,10 +26,15 @@ func DetachAttr() *syscall.SysProcAttr {
 // defaultBaseDir is the fixed, machine-wide parent of Dir() on unix. It
 // deliberately does not use os.TempDir()/$TMPDIR: on macOS, $TMPDIR is a
 // per-user path assigned by launchd, and sudo does not preserve it by
-// default, so a root supervisor (sudo connect -d) and a non-root
-// status/disconnect invocation would otherwise resolve to two different
-// directories for the same daemon. /tmp is a fixed absolute path shared
-// by every user, root included.
+// default, so a root supervisor (sudo connect -d) and a status/disconnect
+// invocation run under a different sudo session would otherwise resolve
+// to two different directories for the same daemon. It's also not /tmp:
+// /tmp is world-writable, so an unprivileged user could pre-create
+// Dir()'s path before the root supervisor does (a symlink/TOCTOU risk),
+// and — since connect/status/disconnect all require root (openvpn needs
+// it regardless; see README) — there's no reason to make daemon state
+// readable outside of root in the first place. /var/run is root-owned
+// and not world-writable on every mainstream unix.
 func defaultBaseDir() string {
-	return "/tmp"
+	return "/var/run"
 }

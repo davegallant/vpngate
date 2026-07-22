@@ -64,12 +64,14 @@ For full usage instructions, see [the cli docs](docs/cli/vpngate.md).
 
 ### Examples
 
-Run in the background, then check on it or disconnect later:
+Run in the background, then check on it or disconnect later. `status` and
+`disconnect` need `sudo` too, since the daemon's state is only readable by
+the user that ran `connect -d` (root):
 
 ```shell
 sudo vpngate connect -d --country Japan
-vpngate status
-vpngate disconnect
+sudo vpngate status
+sudo vpngate disconnect
 ```
 
 List Japanese servers sorted by lowest ping:

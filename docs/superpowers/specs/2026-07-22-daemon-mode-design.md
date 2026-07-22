@@ -165,15 +165,38 @@ Thin commands that call into `pkg/daemon`: load state, send `STATUS` or
   supervisor detects early exit before reaching `CONNECTED`, cleans up,
   and the parent's 30s wait surfaces the failure with the tail of
   `daemon.log` instead of a bare timeout message.
-- **Requires elevated privileges:** unchanged from today — since the
-  supervisor is a re-exec of the same binary, it inherits whatever
-  privilege `connect -d` itself was run under (e.g. still needs `sudo`).
-  `status`/`disconnect` themselves never need elevated privileges: they
-  only ever talk to the supervisor's control socket over loopback TCP,
-  which any local user can dial regardless of who owns the process.
+- **Requires elevated privileges — `status`/`disconnect` too (corrected
+  during implementation):** `connect -d` is a re-exec of the same binary,
+  so it inherits whatever privilege it was run under (e.g. still needs
+  `sudo`), unchanged from today. As first written, this section claimed
+  `status`/`disconnect` never need elevated privileges, since the control
+  *socket* has no ACL — any local user can dial 127.0.0.1. But
+  `daemon.Load()` has to read `Dir()/state.json` *before* it even knows
+  the control address, and that file is root-owned, mode `0600`, in a
+  `0700` directory (see `Dir()` resolution note above) — so a non-root
+  `status`/`disconnect` fails at that first read with a permission error,
+  not `ErrNotExist`. The alternative (world-readable state so non-root
+  callers could get past `Load()`) was rejected: it would leak the
+  control socket's port to any local user, and an unauthenticated control
+  protocol means anyone who can read that port can send `STOP` and drop
+  root's VPN. So `status`/`disconnect` require the same privileges as
+  `connect -d` — `sudo` on unix, elevated ("Run as Administrator") on
+  Windows — and `Load()`'s permission error is reported as "Not
+  connected, or insufficient permissions to check (try with sudo)"
+  rather than a raw OS error.
 - **Concurrent `disconnect` calls / control-socket races:** disconnect
   is idempotent — a second call after state is already removed just
   prints `Not connected.`
+- **Known gap — orphaned openvpn on ungraceful supervisor death:** state
+  records the *supervisor's* PID, not openvpn's. If the supervisor is
+  killed directly (`kill -9`, OOM, crash) rather than told to stop via
+  the control socket, `disconnect`'s fallback path kills the (now-dead)
+  supervisor PID and removes state, but openvpn — started `Setsid`-
+  detached from the supervisor's own process group — keeps running,
+  holding the tunnel, with its management port no longer recorded
+  anywhere. Not fixed in this iteration; the real fix is persisting
+  openvpn's own PID (or its management address) in `State` so
+  `disconnect`'s fallback can reach it directly.
 
 ## Testing plan
 

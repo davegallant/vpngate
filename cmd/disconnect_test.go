@@ -31,6 +31,25 @@ func TestDisconnectStalePID(t *testing.T) {
 	assert.Contains(t, out, "Not connected.")
 }
 
+// TestDisconnectPermissionDenied mirrors TestStatusPermissionDenied: a
+// non-root `disconnect` against root-owned state gets EACCES, not
+// ErrNotExist. Skips under root, where chmod 0o000 doesn't deny access.
+func TestDisconnectPermissionDenied(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("permission checks don't apply when running as root")
+	}
+
+	t.Setenv(daemon.DirEnvVar, t.TempDir())
+
+	assert.NoError(t, daemon.Save(daemon.State{PID: os.Getpid(), HostName: "public-vpn-1"}))
+	assert.NoError(t, os.Chmod(daemon.StatePath(), 0o000))
+
+	out := captureStdout(t, func() {
+		assert.NoError(t, disconnectCmd.RunE(disconnectCmd, nil))
+	})
+	assert.Contains(t, out, "insufficient permissions")
+}
+
 func TestDisconnectSendsStop(t *testing.T) {
 	t.Setenv(daemon.DirEnvVar, t.TempDir())
 
