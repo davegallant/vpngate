@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.6.0-rc1
 
 - Add `connect -d`/`--daemon` to run a vpn connection in the background.
 - Add `vpngate status` to check on a background connection started with `connect -d`.
 - Add `vpngate disconnect` to tear down a background connection started with `connect -d`.
+- Add winget packaging for Windows (manifest publishing is currently disabled pending fork/token setup).
 
 ## 0.5.0
 
