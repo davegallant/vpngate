@@ -64,6 +64,14 @@ For full usage instructions, see [the cli docs](docs/cli/vpngate.md).
 
 ### Examples
 
+Run in the background, then check on it or disconnect later:
+
+```shell
+sudo vpngate connect -d --country Japan
+vpngate status
+vpngate disconnect
+```
+
 List Japanese servers sorted by lowest ping:
 
 ```shell

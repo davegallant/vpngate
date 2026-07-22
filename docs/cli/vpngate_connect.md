@@ -14,6 +14,7 @@ vpngate connect [flags]
 
 ```
       --country string   filter by country name or country code (i.e. Japan or jp)
+  -d, --daemon           run the connection in the background; see 'vpngate status' and 'vpngate disconnect'
   -h, --help             help for connect
       --max-ping int     filter out servers with ping higher than this value
       --min-score int    filter out servers with score lower than this value
