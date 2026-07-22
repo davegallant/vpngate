@@ -5,20 +5,27 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	osexec "os/exec"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog/log"
 
+	"github.com/davegallant/vpngate/pkg/daemon"
 	"github.com/davegallant/vpngate/pkg/vpn"
 	"github.com/spf13/cobra"
 )
 
 var (
-	flagRandom      bool
-	flagReconnect   bool
-	flagProxy       string
-	flagSocks5Proxy string
+	flagRandom         bool
+	flagReconnect      bool
+	flagProxy          string
+	flagSocks5Proxy    string
+	flagDaemon         bool
+	flagDaemonRun      bool
+	flagDaemonHostname string
 )
 
 func init() {
@@ -31,6 +38,11 @@ func init() {
 	connectCmd.Flags().IntVar(&flagMinScore, "min-score", 0, "filter out servers with score lower than this value")
 	connectCmd.Flags().BoolVar(&flagRefresh, "refresh", false, "refresh the vpn server list cache before connecting")
 	connectCmd.Flags().BoolVar(&flagNoCache, "no-cache", false, "do not read from or write to the vpn server list cache")
+	connectCmd.Flags().BoolVarP(&flagDaemon, "daemon", "d", false, "run the connection in the background; see 'vpngate status' and 'vpngate disconnect'")
+	connectCmd.Flags().BoolVar(&flagDaemonRun, "__daemon-run", false, "internal: run as the background daemon supervisor")
+	connectCmd.Flags().StringVar(&flagDaemonHostname, "__daemon-hostname", "", "internal: hostname resolved by the foreground process")
+	_ = connectCmd.Flags().MarkHidden("__daemon-run")
+	_ = connectCmd.Flags().MarkHidden("__daemon-hostname")
 	rootCmd.AddCommand(connectCmd)
 }
 
@@ -40,6 +52,10 @@ var connectCmd = &cobra.Command{
 	Long:  `Connect to a vpn from a list of relay servers. Because openvpn creates a network interface, run the connect command with 'sudo' or a user with escalated privileges.`,
 	Args:  cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if flagDaemonRun {
+			return runSupervisor()
+		}
+
 		vpnServers, err := vpn.GetListWithOptions(flagProxy, flagSocks5Proxy, vpn.ListOptions{Refresh: flagRefresh, NoCache: flagNoCache})
 		if err != nil {
 			return err
@@ -77,6 +93,10 @@ var connectCmd = &cobra.Command{
 			} else {
 				return fmt.Errorf("server %q was not found", selection)
 			}
+		}
+
+		if flagDaemon {
+			return startDaemon(serverSelected)
 		}
 
 		for {
@@ -121,6 +141,115 @@ var connectCmd = &cobra.Command{
 			}
 		}
 	},
+}
+
+// startDaemon re-execs the current binary detached from the terminal so
+// it can run connect in the background, then waits for it to report a
+// successful connection. serverSelected is the zero value when --random
+// was passed — the daemon resolves its own server in that case, possibly
+// reselecting on every reconnect attempt.
+func startDaemon(serverSelected vpn.Server) error {
+	if state, err := daemon.Load(); err == nil {
+		if daemon.IsAlive(state.PID) {
+			return fmt.Errorf("already connected to %s (PID %d); run 'vpngate disconnect' first", state.HostName, state.PID)
+		}
+		_ = daemon.Remove()
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	selfPath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	childArgs := []string{"connect", "--__daemon-run"}
+	if !flagRandom {
+		childArgs = append(childArgs, "--__daemon-hostname", serverSelected.HostName)
+	}
+	childArgs = append(childArgs, forwardableConnectArgs()...)
+
+	child := osexec.Command(selfPath, childArgs...)
+	child.SysProcAttr = daemon.DetachAttr()
+
+	if err := child.Start(); err != nil {
+		return fmt.Errorf("starting background daemon: %w", err)
+	}
+	if err := child.Process.Release(); err != nil {
+		return err
+	}
+
+	return waitForDaemonReady(30 * time.Second)
+}
+
+// forwardableConnectArgs reproduces the subset of connect's own flags
+// that the re-exec'd daemon supervisor needs to repeat the same server
+// selection and connection behavior.
+func forwardableConnectArgs() []string {
+	var args []string
+	if flagReconnect {
+		args = append(args, "--reconnect")
+	}
+	if flagRandom {
+		args = append(args, "--random")
+	}
+	if flagProxy != "" {
+		args = append(args, "--proxy", flagProxy)
+	}
+	if flagSocks5Proxy != "" {
+		args = append(args, "--socks5", flagSocks5Proxy)
+	}
+	if flagCountry != "" {
+		args = append(args, "--country", flagCountry)
+	}
+	if flagMaxPing != 0 {
+		args = append(args, "--max-ping", strconv.Itoa(flagMaxPing))
+	}
+	if flagMinScore != 0 {
+		args = append(args, "--min-score", strconv.Itoa(flagMinScore))
+	}
+	if flagRefresh {
+		args = append(args, "--refresh")
+	}
+	if flagNoCache {
+		args = append(args, "--no-cache")
+	}
+	return args
+}
+
+// waitForDaemonReady polls for the daemon's state file to appear,
+// signalling a successful first connection, surfacing the tail of the
+// daemon log if it times out instead.
+func waitForDaemonReady(timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for {
+		state, err := daemon.Load()
+		if err == nil {
+			fmt.Printf("Connected in background to %s (PID %d)\n", state.HostName, state.PID)
+			return nil
+		}
+		if !os.IsNotExist(err) {
+			return err
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("timed out waiting for background connection; see %s\n%s", daemon.LogPath(), tailLog())
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+}
+
+// tailLog returns the last few lines of the daemon log for error
+// messages, or an empty string if it can't be read.
+func tailLog() string {
+	data, err := os.ReadFile(daemon.LogPath())
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+	if len(lines) > 10 {
+		lines = lines[len(lines)-10:]
+	}
+	return strings.Join(lines, "\n")
 }
 
 func buildServerSelection(servers []vpn.Server) ([]string, map[string]vpn.Server) {
