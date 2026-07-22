@@ -14,6 +14,10 @@ lint: ## Run lint
 	@go get github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6.2
 	golangci-lint run
 
+docs: ## Regenerate CLI reference docs into docs/cli/
+	go run ./tools/gendocs
+.PHONY: docs
+
 release: ## Tag and push a release using the CHANGELOG.md entry as the tag message, e.g. make release VERSION=0.5.0
 	@if [ -z "$(VERSION)" ]; then \
 		echo "VERSION is required, e.g. make release VERSION=0.5.0"; \

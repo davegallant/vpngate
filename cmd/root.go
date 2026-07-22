@@ -32,3 +32,11 @@ func Execute() {
 		os.Exit(1)
 	}
 }
+
+// RootCmd exposes the fully-wired command tree (every subcommand's init()
+// has already run by the time any importer can call this) — used by
+// tools/gendocs to walk it with cobra/doc, without making rootCmd itself
+// package-public.
+func RootCmd() *cobra.Command {
+	return rootCmd
+}

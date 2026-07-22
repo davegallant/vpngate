@@ -21,8 +21,8 @@ go test -v -run ^TestParseVpnList$ ./pkg/vpn/
 # Run tests in a specific package
 go test -v ./pkg/vpn/
 
-# Generate CLI docs into README
-go run main.go docs --path README.md
+# Regenerate CLI reference docs into docs/cli/
+go run ./tools/gendocs
 ```
 
 CGO is disabled globally (`CGO_ENABLED=0` in Makefile, `.goreleaser.yaml`, and `flake.nix`).
@@ -32,10 +32,13 @@ CGO is disabled globally (`CGO_ENABLED=0` in Makefile, `.goreleaser.yaml`, and `
 ```
 main.go              Entry point (logging setup, calls cmd.Execute())
 cmd/
-  root.go            Root cobra command + Execute()
+  root.go            Root cobra command + Execute() + RootCmd()
   connect.go         "connect" subcommand with interactive server selection
   list.go            "list" subcommand (table display)
-  docs.go            Hidden "docs" subcommand (README generation)
+tools/
+  gendocs/main.go    Standalone doc generator (writes docs/cli/*.md)
+docs/
+  cli/               Generated CLI reference (cobra doc.GenMarkdownTree)
 pkg/
   vpn/
     list.go          Server struct, GetList(), CSV parsing, HTTP client
@@ -165,4 +168,4 @@ GitHub Actions workflows in `.github/workflows/`:
 - `golangci-lint.yml` - Lint + test on push/PR
 - `release.yml` - GoReleaser on tag push (cross-compiles for linux/darwin/windows)
 - `update-vendor-hash.yml` - Auto-updates Nix flake vendorHash
-- `update-docs.yml` - Auto-updates README CLI docs
+- `update-docs.yml` - Auto-updates docs/cli/ CLI reference
