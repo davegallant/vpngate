@@ -5,6 +5,7 @@ package daemon
 import (
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,4 +23,15 @@ func TestIsAliveExitedProcess(t *testing.T) {
 
 func TestDetachAttrNotNil(t *testing.T) {
 	assert.NotNil(t, DetachAttr())
+}
+
+// TestDirIsFixedNotPerUserTemp locks in the fix for a real bug: Dir()
+// must NOT depend on os.TempDir()/$TMPDIR, because on macOS $TMPDIR is a
+// per-user path assigned by launchd that sudo does not preserve — a root
+// `connect -d` and a non-root `status`/`disconnect` would otherwise
+// resolve to two different directories for the same daemon. Unsetting
+// TMPDIR here simulates that divergence; Dir() must be unaffected.
+func TestDirIsFixedNotPerUserTemp(t *testing.T) {
+	t.Setenv("TMPDIR", "/some/other/per-user/temp/dir")
+	assert.True(t, strings.HasPrefix(Dir(), "/tmp/vpngate"), "Dir() = %q, want prefix /tmp/vpngate", Dir())
 }

@@ -22,13 +22,27 @@ tear down that background connection.
 ### New package `pkg/daemon`
 
 - `State` struct + `Save`/`Load`/`Remove` — JSON file at
-  `os.TempDir()/vpngate/state.json` (not `~/.vpngate/`: `$HOME` is
-  unreliable under `sudo`, which would make `status`/`disconnect` look in
-  the wrong place when run without `sudo`; `os.TempDir()` is stable
-  across that and matches the already-agreed "dies on reboot" scope).
-  Holds: supervisor PID, **control** host:port (see below), connected
-  server (hostname/IP/country), config file path, log file path,
-  started-at timestamp.
+  `Dir()/state.json`. Holds: supervisor PID, **control** host:port (see
+  below), connected server (hostname/IP/country), config file path, log
+  file path, started-at timestamp.
+
+  **`Dir()` resolution (corrected during implementation):** not
+  `~/.vpngate/` (`$HOME` is unreliable under `sudo`) and, as first
+  written, not `os.TempDir()/vpngate/` either — `os.TempDir()` has the
+  *same* problem one level down. On macOS, `$TMPDIR` is a per-user path
+  assigned by launchd (e.g. `/var/folders/.../T/`), and `sudo` does not
+  preserve it by default, so a root `connect -d` (`os.TempDir()` →
+  `/tmp`) and a non-root `status`/`disconnect` (`os.TempDir()` → the
+  invoking user's `/var/folders/...` path) would resolve to two
+  different directories for the same daemon — `status` would report "Not
+  connected" while actually connected. `Dir()` instead resolves to a
+  single fixed, machine-wide location that doesn't depend on who's
+  asking: `/tmp/vpngate` on unix (a literal, not `$TMPDIR`), and
+  `%ProgramData%\vpngate` on Windows (falling back to `os.TempDir()`
+  only if `%ProgramData%` is unset). Still matches the "dies on reboot"
+  scope on unix (`/tmp` is typically cleared); on Windows, `%ProgramData%`
+  does persist across reboots, but daemon state there is still
+  self-correcting via the stale-PID cleanup in `status`/`disconnect`.
 - `Management` client — minimal client for openvpn's plaintext management
   protocol over TCP: `Connect()`, `State()` (parses the `>STATE:` line for
   CONNECTING/CONNECTED/RECONNECTING/EXITING), `Disconnect()` (sends
@@ -82,24 +96,23 @@ Thin commands that call into `pkg/daemon`: load state, send `STATUS` or
 
 1. Foreground process: fetch + filter server list, resolve selection
    (survey prompt or positional arg) — identical to today.
-2. Check `os.TempDir()/vpngate/state.json`: if it exists and its PID is
-   alive, error out (`already connected to <host>, run 'vpngate
-   disconnect' first`).
+2. Check `Dir()/state.json`: if it exists and its PID is alive, error out
+   (`already connected to <host>, run 'vpngate disconnect' first`).
 3. Re-exec self detached with `--__daemon-run <hostname>` + the original
    flags (`--reconnect`, `--random`, `--country`, `--proxy`, etc.) so the
    child can reproduce filtering if `--random` needs to reselect on
    reconnect.
-4. Child (supervisor): decode config to
-   `os.TempDir()/vpngate/config.ovpn` (persistent, not a one-shot
-   tempfile, so it survives across reconnect-loop iterations). Open two
+4. Child (supervisor): decode config to `Dir()/config.ovpn` (persistent,
+   not a one-shot tempfile, so it survives across reconnect-loop
+   iterations). Open two
    loopback listeners: the **control** socket (`net.Listen("tcp",
    "127.0.0.1:0")`, kept open and served for the supervisor's whole
    lifetime) and, per openvpn instance, a fresh **management** port
    (opened-then-closed the same way to reserve a free port, then passed
    to openvpn) — start `openvpn --management 127.0.0.1 <port> --config
    ... --data-ciphers AES-128-CBC` with stdout/stderr redirected to
-   `os.TempDir()/vpngate/daemon.log`, detached so it isn't killed if the
-   parent's process group is signaled.
+   `Dir()/daemon.log`, detached so it isn't killed if the parent's
+   process group is signaled.
 5. Child polls its `Management` client for `CONNECTED,SUCCESS` (falling
    back to scanning the log for `Initialization Sequence Completed` if
    management parsing misses it), then writes `state.json` (recording the
@@ -147,7 +160,7 @@ Thin commands that call into `pkg/daemon`: load state, send `STATUS` or
 - **Stale state file** (process crashed/was killed outside vpngate, e.g.
   `kill -9` or reboot): detected via dead PID in both `status` and
   `disconnect`; auto-cleaned so the user isn't stuck manually deleting
-  `os.TempDir()/vpngate/state.json`.
+  `Dir()/state.json`.
 - **openvpn fails to start** (bad config, permissions, port in use):
   supervisor detects early exit before reaching `CONNECTED`, cleans up,
   and the parent's 30s wait surfaces the failure with the tail of

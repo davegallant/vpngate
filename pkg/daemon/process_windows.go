@@ -3,6 +3,7 @@
 package daemon
 
 import (
+	"os"
 	"syscall"
 
 	"golang.org/x/sys/windows"
@@ -38,4 +39,17 @@ func DetachAttr() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{
 		CreationFlags: windows.CREATE_NEW_PROCESS_GROUP | detachedProcess,
 	}
+}
+
+// defaultBaseDir is the fixed, machine-wide parent of Dir() on Windows:
+// %ProgramData% (falling back to os.TempDir() in the rare case it's
+// unset) rather than %TEMP%, which is per-user and — for consistency
+// with the unix side of this same fix — shouldn't be relied on to agree
+// between an elevated "Run as Administrator" connect -d and a normal
+// status/disconnect invocation.
+func defaultBaseDir() string {
+	if v := os.Getenv("ProgramData"); v != "" {
+		return v
+	}
+	return os.TempDir()
 }
