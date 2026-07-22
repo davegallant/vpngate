@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add `connect -d`/`--daemon` to run a vpn connection in the background.
+- Add `vpngate status` to check on a background connection started with `connect -d`.
+- Add `vpngate disconnect` to tear down a background connection started with `connect -d`.
+
 ## 0.5.0
 
 - Fix a nil-pointer panic when the vpngate.net server list API returns a non-200 status code.

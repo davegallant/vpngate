@@ -3,6 +3,7 @@ package cmd
 import (
 	"testing"
 
+	"github.com/davegallant/vpngate/pkg/daemon"
 	"github.com/davegallant/vpngate/pkg/vpn"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,4 +44,37 @@ func TestBuildServerSelection(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, s, got)
 	}
+}
+
+func TestForwardableConnectArgs(t *testing.T) {
+	flagReconnect = true
+	flagRandom = false
+	flagProxy = "http://127.0.0.1:8080"
+	flagSocks5Proxy = ""
+	flagCountry = "Japan"
+	flagMaxPing = 100
+	flagMinScore = 0
+	flagRefresh = true
+	flagNoCache = false
+	t.Cleanup(func() {
+		flagReconnect = false
+		flagProxy = ""
+		flagCountry = ""
+		flagMaxPing = 0
+		flagRefresh = false
+	})
+
+	args := forwardableConnectArgs()
+	assert.Equal(t, []string{
+		"--reconnect",
+		"--proxy", "http://127.0.0.1:8080",
+		"--country", "Japan",
+		"--max-ping", "100",
+		"--refresh",
+	}, args)
+}
+
+func TestTailLogMissingFile(t *testing.T) {
+	t.Setenv(daemon.DirEnvVar, t.TempDir())
+	assert.Equal(t, "", tailLog())
 }
