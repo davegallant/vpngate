@@ -71,7 +71,7 @@ func runSupervisor() error {
 	if err != nil {
 		return err
 	}
-	defer logFile.Close()
+	defer func() { _ = logFile.Close() }()
 
 	controlLn, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {

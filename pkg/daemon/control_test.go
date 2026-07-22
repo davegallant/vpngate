@@ -12,7 +12,7 @@ import (
 func TestControlStatus(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	want := Snapshot{State: "CONNECTED", HostName: "public-vpn-1", IPAddr: "1.2.3.4", CountryLong: "Japan", PID: 42}
 	server := NewControlServer(ln, func() (Snapshot, error) { return want, nil }, nil)
@@ -28,7 +28,7 @@ func TestControlStatus(t *testing.T) {
 func TestControlStatusError(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	server := NewControlServer(ln, func() (Snapshot, error) { return Snapshot{}, errors.New("boom") }, nil)
 	go server.Serve()
@@ -40,7 +40,7 @@ func TestControlStatusError(t *testing.T) {
 func TestControlStop(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	stopped := make(chan struct{})
 	server := NewControlServer(ln, nil, func() { close(stopped) })

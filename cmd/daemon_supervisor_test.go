@@ -16,20 +16,20 @@ func TestReserveLoopbackAddr(t *testing.T) {
 	// The port must be free immediately afterward.
 	ln, err := net.Listen("tcp", addr)
 	assert.NoError(t, err)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 }
 
 func TestWaitForManagementSucceeds(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	go func() {
 		conn, err := ln.Accept()
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 		_, _ = conn.Write([]byte(">INFO:OpenVPN Management Interface Version 5\n"))
 		// Keep the connection open for State()/Disconnect() calls the
 		// caller might make; just block until the test ends.
@@ -40,7 +40,7 @@ func TestWaitForManagementSucceeds(t *testing.T) {
 	mgmt, err := waitForManagement(ln.Addr().String(), time.Second)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgmt)
-	defer mgmt.Close()
+	defer func() { _ = mgmt.Close() }()
 }
 
 func TestWaitForManagementTimesOut(t *testing.T) {

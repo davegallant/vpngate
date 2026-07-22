@@ -25,7 +25,7 @@ func startFakeManagementServer(t *testing.T, onCommand func(cmd string, conn net
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		_, _ = conn.Write([]byte(">INFO:OpenVPN Management Interface Version 5 -- type 'help' for more info\n"))
 
@@ -51,7 +51,7 @@ func TestManagementState(t *testing.T) {
 
 	m, err := DialManagement(addr, time.Second)
 	assert.NoError(t, err)
-	defer m.Close()
+	defer func() { _ = m.Close() }()
 
 	state, err := m.State()
 	assert.NoError(t, err)
@@ -66,7 +66,7 @@ func TestManagementDisconnect(t *testing.T) {
 
 	m, err := DialManagement(addr, time.Second)
 	assert.NoError(t, err)
-	defer m.Close()
+	defer func() { _ = m.Close() }()
 
 	assert.NoError(t, m.Disconnect())
 

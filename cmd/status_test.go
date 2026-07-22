@@ -59,7 +59,7 @@ func TestStatusConnected(t *testing.T) {
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	snap := daemon.Snapshot{State: "CONNECTED", HostName: "public-vpn-1", IPAddr: "1.2.3.4", CountryLong: "Japan", StartedAt: time.Now().Add(-time.Minute), PID: os.Getpid()}
 	server := daemon.NewControlServer(ln, func() (daemon.Snapshot, error) { return snap, nil }, nil)

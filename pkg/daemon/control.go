@@ -56,7 +56,7 @@ func (c *ControlServer) Serve() {
 }
 
 func (c *ControlServer) handle(conn net.Conn) {
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	line, err := bufio.NewReader(conn).ReadString('\n')
 	if err != nil {
@@ -98,7 +98,7 @@ func SendStatus(addr string, timeout time.Duration) (Snapshot, error) {
 	if err != nil {
 		return snap, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	_ = conn.SetDeadline(time.Now().Add(timeout))
 
 	if _, err := conn.Write([]byte("STATUS\n")); err != nil {
@@ -128,7 +128,7 @@ func SendStop(addr string, timeout time.Duration) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	_ = conn.SetDeadline(time.Now().Add(timeout))
 
 	if _, err := conn.Write([]byte("STOP\n")); err != nil {

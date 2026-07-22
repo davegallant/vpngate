@@ -36,7 +36,7 @@ func TestDisconnectSendsStop(t *testing.T) {
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	stopped := make(chan struct{})
 	server := daemon.NewControlServer(ln, nil, func() { close(stopped) })
