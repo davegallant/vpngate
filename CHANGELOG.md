@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0-rc2
+
+- Fix `connect -d` silently timing out with no useful error when OpenVPN isn't installed: the background supervisor now logs its own startup failures to `daemon.log` (previously discarded, since the detached process has no console), with the same "is required, please install it" message the foreground `connect` command already gives.
+
 ## 0.6.0-rc1
 
 - Add `connect -d`/`--daemon` to run a vpn connection in the background.
