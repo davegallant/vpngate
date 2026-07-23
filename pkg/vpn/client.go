@@ -34,7 +34,7 @@ func Connect(configPath string) error {
 func ConnectDetached(configPath, managementAddr string, logWriter io.Writer, sysProcAttr *syscall.SysProcAttr) (*osexec.Cmd, error) {
 	executable := executablePath()
 	if _, err := osexec.LookPath(executable); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s is required, please install it", executable)
 	}
 
 	host, port, err := net.SplitHostPort(managementAddr)

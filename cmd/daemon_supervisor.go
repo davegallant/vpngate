@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/davegallant/vpngate/pkg/daemon"
@@ -72,6 +73,14 @@ func runSupervisor() error {
 		return err
 	}
 	defer func() { _ = logFile.Close() }()
+
+	// The supervisor is a detached, re-exec'd child: nothing connects its
+	// stdout/stderr back to the terminal the user is watching, so the
+	// default console logger would silently discard everything (e.g. an
+	// "openvpn is required" failure before openvpn ever starts, which
+	// never reaches daemon.log otherwise). Redirect it to daemon.log,
+	// the one place the foreground process points users at on failure.
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: logFile, NoColor: true})
 
 	controlLn, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
