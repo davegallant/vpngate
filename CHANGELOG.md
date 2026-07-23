@@ -1,15 +1,12 @@
 # Changelog
 
-## 0.6.0-rc2
-
-- Fix `connect -d` silently timing out with no useful error when OpenVPN isn't installed: the background supervisor now logs its own startup failures to `daemon.log` (previously discarded, since the detached process has no console), with the same "is required, please install it" message the foreground `connect` command already gives.
-
-## 0.6.0-rc1
+## 0.6.0
 
 - Add `connect -d`/`--daemon` to run a vpn connection in the background.
 - Add `vpngate status` to check on a background connection started with `connect -d`.
 - Add `vpngate disconnect` to tear down a background connection started with `connect -d`.
 - Add winget packaging for Windows (manifest publishing is currently disabled pending fork/token setup).
+- Fix `connect -d` silently timing out with no useful error when OpenVPN isn't installed: the background supervisor now logs its own startup failures to `daemon.log` (previously discarded, since the detached process has no console), with the same "is required, please install it" message the foreground `connect` command already gives.
 
 ## 0.5.0
 
