@@ -70,13 +70,14 @@ For full usage instructions, see [the cli docs](docs/cli/vpngate.md).
 
 ### Examples
 
-Run in the background, then check on it or disconnect later. `status` and
-`disconnect` need `sudo` too, since the daemon's state is only readable by
-the user that ran `connect -d` (root):
+Run in the background, then check on it, tail its log, or disconnect later.
+`status`, `logs`, and `disconnect` need `sudo` too, since the daemon's state
+is only readable by the user that ran `connect -d` (root):
 
 ```shell
 sudo vpngate connect -d --country Japan
 sudo vpngate status
+sudo vpngate logs -f
 sudo vpngate disconnect
 ```
 

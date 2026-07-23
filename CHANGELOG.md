@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add `vpngate logs` to view the log for a background connection started with `connect -d`, with `-f`/`--follow` and `-n`/`--lines` options.
+
 ## 0.6.0
 
 - Add `connect -d`/`--daemon` to run a vpn connection in the background.

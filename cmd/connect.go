@@ -245,11 +245,7 @@ func tailLog() string {
 	if err != nil {
 		return ""
 	}
-	lines := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
-	if len(lines) > 10 {
-		lines = lines[len(lines)-10:]
-	}
-	return strings.Join(lines, "\n")
+	return strings.TrimRight(lastLines(data, 10), "\n")
 }
 
 func buildServerSelection(servers []vpn.Server) ([]string, map[string]vpn.Server) {
