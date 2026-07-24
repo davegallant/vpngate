@@ -37,16 +37,16 @@ func runLogs(w io.Writer, path string, lines int, follow bool) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Fprintln(w, "No daemon log yet; start one with 'connect -d'.")
-			return nil
+			_, err := fmt.Fprintln(w, "No daemon log yet; start one with 'connect -d'.")
+			return err
 		}
 		// daemon.log is root-owned (openvpn itself requires root), so a
 		// non-root invocation hits a permission error here rather than
 		// "not exist" — report it plainly instead of a raw "permission
 		// denied" error, matching status/disconnect.
 		if os.IsPermission(err) {
-			fmt.Fprintln(w, "Insufficient permissions to read the daemon log (try with sudo).")
-			return nil
+			_, err := fmt.Fprintln(w, "Insufficient permissions to read the daemon log (try with sudo).")
+			return err
 		}
 		return err
 	}
@@ -59,7 +59,9 @@ func runLogs(w io.Writer, path string, lines int, follow bool) error {
 			return err
 		}
 		if !strings.HasSuffix(string(data), "\n") {
-			fmt.Fprintln(w)
+			if _, err := fmt.Fprintln(w); err != nil {
+				return err
+			}
 		}
 	}
 
