@@ -19,6 +19,8 @@ curl ipinfo.io
 
 ## Install
 
+> Check out [vpngate-mac](https://github.com/davegallant/vpngate-mac) for a native macOS Client
+
 You can install vpngate in a few different ways, and it will differ slightly depending on your OS.
 
 ### Homebrew (macOS and linux)
