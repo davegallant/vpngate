@@ -11,9 +11,9 @@ for CLI, zerolog for logging, and supports macOS, Linux, and Windows.
 ## Build / Lint / Test Commands
 
 ```bash
-make build                # outputs to dist/vpngate (CGO_ENABLED=0)
-make test                 # go test -v ./...
-make lint                 # golangci-lint run (installs v2.6.2 if needed)
+just build                # outputs to dist/vpngate (CGO_ENABLED=0)
+just test                 # go test -v ./...
+just lint                 # golangci-lint run (installs v2.6.2 if needed)
 
 # Run a single test by name
 go test -v -run ^TestParseVpnList$ ./pkg/vpn/
@@ -25,7 +25,7 @@ go test -v ./pkg/vpn/
 go run ./tools/gendocs
 ```
 
-CGO is disabled globally (`CGO_ENABLED=0` in Makefile, `.goreleaser.yaml`, and `flake.nix`).
+CGO is disabled globally (`CGO_ENABLED=0` in justfile, `.goreleaser.yaml`, and `flake.nix`).
 
 ## Project Structure
 
