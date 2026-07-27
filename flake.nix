@@ -54,6 +54,10 @@
               gopls
               gotools
               golangci-lint
+              just
+              asciinema
+              asciinema-agg
+              gifsicle
             ];
             shellHook = ''
               echo "Welcome to the vpngate dev environment"
