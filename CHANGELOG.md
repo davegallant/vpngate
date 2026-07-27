@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Add `vpngate logs` to view the log for a background connection started with `connect -d`, with `-f`/`--follow` and `-n`/`--lines` options.
+- Simplify the interactive server selection list to show a country flag emoji, country name, and IP address (e.g. `🇯🇵 Japan (219.100.37.4)`), dropping the hostname/ping/score columns and column-alignment padding.
+- Alias vpngate.net's `Korea Republic of` and `Russian Federation` country names to `South Korea` and `Russia`.
 
 ## 0.6.0
 

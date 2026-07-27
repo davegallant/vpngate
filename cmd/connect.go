@@ -249,21 +249,10 @@ func tailLog() string {
 }
 
 func buildServerSelection(servers []vpn.Server) ([]string, map[string]vpn.Server) {
-	hostnameWidth := len("Hostname")
-	countryWidth := len("Country")
-	for _, server := range servers {
-		if len(server.HostName) > hostnameWidth {
-			hostnameWidth = len(server.HostName)
-		}
-		if len(server.CountryLong) > countryWidth {
-			countryWidth = len(server.CountryLong)
-		}
-	}
-
 	serverSelection := make([]string, len(servers))
 	serverMap := make(map[string]vpn.Server, len(servers)*2)
 	for i, server := range servers {
-		label := formatServerSelection(server, hostnameWidth, countryWidth)
+		label := formatServerSelection(server)
 		serverSelection[i] = label
 		serverMap[label] = server
 		serverMap[server.HostName] = server
@@ -272,16 +261,31 @@ func buildServerSelection(servers []vpn.Server) ([]string, map[string]vpn.Server
 	return serverSelection, serverMap
 }
 
-func formatServerSelection(server vpn.Server, hostnameWidth int, countryWidth int) string {
-	return fmt.Sprintf(
-		"%-*s  %-*s  %-15s  ping %s",
-		hostnameWidth,
-		server.HostName,
-		countryWidth,
-		server.CountryLong,
-		server.IPAddr,
-		server.Ping,
-	)
+func formatServerSelection(server vpn.Server) string {
+	flag := countryFlag(server.CountryShort)
+	if flag == "" {
+		return fmt.Sprintf("%s (%s)", server.CountryLong, server.IPAddr)
+	}
+	return fmt.Sprintf("%s %s (%s)", flag, server.CountryLong, server.IPAddr)
+}
+
+// countryFlag converts an ISO 3166-1 alpha-2 country code (e.g. "jp") into
+// its regional indicator flag emoji (e.g. "🇯🇵"). It returns "" for codes
+// that aren't exactly two ASCII letters.
+func countryFlag(countryShort string) string {
+	letters := []rune(strings.ToUpper(countryShort))
+	if len(letters) != 2 {
+		return ""
+	}
+
+	var flag strings.Builder
+	for _, r := range letters {
+		if r < 'A' || r > 'Z' {
+			return ""
+		}
+		flag.WriteRune(0x1F1E6 + (r - 'A'))
+	}
+	return flag.String()
 }
 
 // extractHostname extracts the hostname from a manually provided argument or legacy selection string.

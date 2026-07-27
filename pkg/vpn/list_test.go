@@ -45,4 +45,8 @@ func TestParseVpnList(t *testing.T) {
 	assert.Equal(t, (*servers)[0].HostName, "public-vpn-227")
 	assert.Equal(t, (*servers)[0].Ping, "13")
 	assert.Equal(t, (*servers)[0].Score, 2086924)
+
+	for _, s := range *servers {
+		assert.NotEqual(t, "Korea Republic of", s.CountryLong, "CountryLong should be aliased to South Korea")
+	}
 }

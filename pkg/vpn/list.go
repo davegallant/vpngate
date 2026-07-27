@@ -57,7 +57,20 @@ func parseVpnList(r io.Reader) (*[]Server, error) {
 		return nil, errors.Annotatef(err, "Unable to parse CSV")
 	}
 
+	for i := range servers {
+		if alias, ok := countryAliases[servers[i].CountryLong]; ok {
+			servers[i].CountryLong = alias
+		}
+	}
+
 	return &servers, nil
+}
+
+// countryAliases maps vpngate.net's CountryLong values to more familiar
+// country names.
+var countryAliases = map[string]string{
+	"Korea Republic of":  "South Korea",
+	"Russian Federation": "Russia",
 }
 
 // createHTTPClient creates an HTTP client with optional proxy configuration
