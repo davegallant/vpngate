@@ -33,7 +33,13 @@ brew install openvpn davegallant/public/vpngate
 
 ### Windows
 
-Install OpenVPN from the [official website](https://openvpn.net/community-downloads/), then manually download and extract the Windows release from the relevant Github release.
+vpngate can be installed with [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/), which also installs OpenVPN as a dependency:
+
+```shell
+winget install davegallant.vpngate
+```
+
+Alternatively, install OpenVPN from the [official website](https://openvpn.net/community-downloads/), then manually download and extract the Windows release from the relevant Github release.
 
 Once the release is extracted, open Command Prompt *as Administrator*, and run vpngate.exe from the location where it was extracted.
 
