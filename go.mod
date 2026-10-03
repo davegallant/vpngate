@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/jszwec/csvutil v1.10.0
 	github.com/juju/errors v1.0.0
-	github.com/olekukonko/tablewriter v1.1.4
+	github.com/olekukonko/tablewriter v1.1.5
 	github.com/rs/zerolog v1.35.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
