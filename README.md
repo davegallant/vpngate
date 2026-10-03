@@ -36,8 +36,12 @@ brew install openvpn davegallant/public/vpngate
 vpngate can be installed with [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/), which also installs OpenVPN as a dependency:
 
 ```shell
-winget install davegallant.vpngate
+winget install davegallant.vpngate --source winget
 ```
+
+> The `--source winget` flag skips the Microsoft Store source, which can fail with a certificate error (`0x8a15005e`).
+>
+> After installing, open a fresh terminal — the `vpngate` command won't be found in shells that were already open when the install modified `PATH`.
 
 Alternatively, install OpenVPN from the [official website](https://openvpn.net/community-downloads/), then manually download and extract the Windows release from the relevant Github release.
 
