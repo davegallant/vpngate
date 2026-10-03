@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.0
 
 - Enable GoReleaser to publish Winget manifest updates and open PRs on tagged releases.
 - Fix `vpngate --version` reporting a stale hardcoded version: `cmd.version` is now injected at build time via ldflags, from the latest versioned CHANGELOG.md entry (`just build`) or the release tag (goreleaser).
