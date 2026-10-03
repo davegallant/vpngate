@@ -77,10 +77,7 @@ winget:
       - cli
     dependencies:
       - package_identifier: OpenVPNTechnologies.OpenVPN
-    # Dry run only: writes the manifest to dist/ but does not push or open a
-    # PR. Flip to false once davegallant/winget-pkgs and the release token
-    # are confirmed to work end to end.
-    skip_upload: true
+    skip_upload: false
     repository:
       owner: davegallant
       name: winget-pkgs
