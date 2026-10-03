@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/davegallant/vpngate/pkg/util"
 )
 
 const serverCachefile = "servers.json"
@@ -86,7 +88,7 @@ func writeVpnListToCache(servers []Server) error {
 	}
 	cacheFile := filepath.Join(cacheDir, serverCachefile)
 
-	return os.WriteFile(cacheFile, f, 0o644)
+	return util.WriteFileAtomic(cacheFile, f, 0o644)
 }
 
 func vpnListCacheIsExpired() bool {

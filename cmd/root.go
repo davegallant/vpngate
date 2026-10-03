@@ -7,7 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const version = "0.5.0"
+// version is the release version, injected at build time via
+// -ldflags "-X github.com/davegallant/vpngate/cmd.version=X.Y.Z"
+// (see the justfile build recipe and .goreleaser.yaml). It stays "dev"
+// for ad-hoc `go build` invocations without the flag.
+var version = "dev"
 
 var rootCmd = &cobra.Command{
 	Use:     "vpngate",

@@ -17,6 +17,7 @@ func TestSaveLoadRemove(t *testing.T) {
 
 	want := State{
 		PID:         12345,
+		OpenVPNPID:  12346,
 		ControlAddr: "127.0.0.1:9999",
 		HostName:    "public-vpn-1",
 		IPAddr:      "1.2.3.4",
@@ -28,6 +29,7 @@ func TestSaveLoadRemove(t *testing.T) {
 	got, err := Load()
 	assert.NoError(t, err)
 	assert.Equal(t, want.PID, got.PID)
+	assert.Equal(t, want.OpenVPNPID, got.OpenVPNPID)
 	assert.Equal(t, want.ControlAddr, got.ControlAddr)
 	assert.Equal(t, want.HostName, got.HostName)
 	assert.Equal(t, want.IPAddr, got.IPAddr)

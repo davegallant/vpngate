@@ -48,7 +48,16 @@ var disconnectCmd = &cobra.Command{
 			if proc, ferr := os.FindProcess(state.PID); ferr == nil {
 				_ = proc.Kill()
 			}
+			// The supervisor starts openvpn detached as well, so a crashed
+			// supervisor can leave the tunnel up behind it — take that
+			// down too instead of reporting "Disconnected" prematurely.
+			if state.OpenVPNPID > 0 {
+				if proc, ferr := os.FindProcess(state.OpenVPNPID); ferr == nil {
+					_ = proc.Kill()
+				}
+			}
 			_ = daemon.Remove()
+			_ = daemon.RemovePid()
 		}
 
 		fmt.Println("Disconnected.")

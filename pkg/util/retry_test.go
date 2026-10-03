@@ -43,7 +43,8 @@ func TestRetryExhaustsAttempts(t *testing.T) {
 }
 
 // TestRetryWaitsBetweenAttempts guards against the delay parameter being
-// passed as an untyped int that silently truncates to nanoseconds.
+// passed as an untyped int that silently truncates to nanoseconds. It
+// expects attempts-1 sleeps: no sleep happens after the final attempt.
 func TestRetryWaitsBetweenAttempts(t *testing.T) {
 	const attempts = 3
 	delay := 20 * time.Millisecond
@@ -54,5 +55,5 @@ func TestRetryWaitsBetweenAttempts(t *testing.T) {
 	})
 	elapsed := time.Since(start)
 
-	assert.GreaterOrEqual(t, elapsed, delay*time.Duration(attempts))
+	assert.GreaterOrEqual(t, elapsed, delay*time.Duration(attempts-1))
 }

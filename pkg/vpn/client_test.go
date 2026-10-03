@@ -44,3 +44,36 @@ func TestConnectDetachedMissingExecutable(t *testing.T) {
 	_, err := ConnectDetached("config.ovpn", "127.0.0.1:12345", &bytes.Buffer{}, nil)
 	assert.Error(t, err)
 }
+
+func TestSanitizeConfig(t *testing.T) {
+	config := []byte("client\n" +
+		"dev tun\n" +
+		"up /etc/openvpn/update-resolv-conf\n" +
+		"DOWN /etc/openvpn/update-resolv-conf\n" +
+		"plugin /usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so login\n" +
+		"script-security 2\n" +
+		"# up is commented out here\n" +
+		";down also commented\n" +
+		"auth-user-pass\n" +
+		"remote vpn.example.com 1194\n")
+
+	sanitized, stripped := SanitizeConfig(config)
+
+	assert.Equal(t, []string{"up", "down", "plugin", "script-security"}, stripped)
+	out := string(sanitized)
+	assert.Contains(t, out, "# vpngate disabled script directive: up /etc/openvpn/update-resolv-conf")
+	assert.Contains(t, out, "# vpngate disabled script directive: DOWN /etc/openvpn/update-resolv-conf")
+	// Comments mentioning directives are left alone.
+	assert.Contains(t, out, "# up is commented out here")
+	assert.Contains(t, out, ";down also commented")
+	// Non-script directives pass through untouched.
+	assert.Contains(t, out, "\nauth-user-pass\n")
+	assert.Contains(t, out, "\nremote vpn.example.com 1194\n")
+}
+
+func TestSanitizeConfigClean(t *testing.T) {
+	config := []byte("client\ndev tun\nremote vpn.example.com 1194\n")
+	sanitized, stripped := SanitizeConfig(config)
+	assert.Empty(t, stripped)
+	assert.Equal(t, config, sanitized)
+}

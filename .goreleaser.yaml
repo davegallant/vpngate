@@ -25,7 +25,7 @@ builds:
       - goos: windows
         goarch: arm
     ldflags:
-      - -s -w
+      - -s -w -X github.com/davegallant/vpngate/cmd.version={{.Version}}
     mod_timestamp: "{{ .CommitTimestamp }}"
 archives:
   - format_overrides:

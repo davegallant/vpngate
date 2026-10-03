@@ -12,8 +12,12 @@ func Retry(attempts int, delay time.Duration, fn func() error) error {
 		if err = fn(); err == nil {
 			return nil
 		}
-		log.Error().Msgf("Retrying after %v. An error occurred: %s", delay, err)
-		time.Sleep(delay)
+		// No point sleeping after the final attempt — hand the error
+		// back immediately instead of waiting out one more delay.
+		if i < attempts-1 {
+			log.Error().Msgf("Retrying after %v. An error occurred: %s", delay, err)
+			time.Sleep(delay)
+		}
 	}
 	return err
 }

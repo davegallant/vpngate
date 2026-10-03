@@ -32,21 +32,42 @@ CGO is disabled globally (`CGO_ENABLED=0` in justfile, `.goreleaser.yaml`, and `
 ```
 main.go              Entry point (logging setup, calls cmd.Execute())
 cmd/
-  root.go            Root cobra command + Execute() + RootCmd()
-  connect.go         "connect" subcommand with interactive server selection
-  list.go            "list" subcommand (table display)
+  root.go            Root cobra command + Execute() + RootCmd();
+                   version is a var injected via ldflags (see justfile)
+  connect.go         "connect" subcommand: interactive server selection,
+                   foreground connect/reconnect loop, daemon launcher
+  daemon_supervisor.go  Re-exec'd background supervisor: openvpn lifecycle,
+                   management interface, reconnect loop, control socket
+  disconnect.go      "disconnect" subcommand (control socket, kill fallback)
+  status.go          "status" subcommand (control socket snapshot)
+  logs.go            "logs" subcommand (tail -f of the daemon log)
+  list.go            "list" subcommand (table/json/csv display)
+  cache.go           "cache" subcommand (clear/path)
+  filters.go         Shared server filtering (country/score/ping) and sorting
 tools/
   gendocs/main.go    Standalone doc generator (writes docs/cli/*.md)
 docs/
   cli/               Generated CLI reference (cobra doc.GenMarkdownTree)
+  superpowers/       Design docs
 pkg/
   vpn/
     list.go          Server struct, GetList(), CSV parsing, HTTP client
-    list_test.go     Tests for list.go
-    client.go        Connect() - invokes openvpn binary
+    client.go        Connect()/ConnectDetached() - invokes openvpn binary;
+                   SanitizeConfig() strips script/plugin directives from
+                   volunteer-server configs before use
     cache.go         File-based JSON cache (~/.vpngate/cache/)
+  daemon/
+    dir.go           Daemon dir/state/config/log path resolution
+    pid.go           Supervisor PID file (startup liveness marker)
+    state.go         state.json save/load (includes openvpn PID)
+    control.go       Loopback control protocol (STATUS/STOP)
+    management.go    OpenVPN management-interface client
+    process_unix.go / process_windows.go  IsAlive, DetachAttr, base dir
   exec/run.go        Generic command executor with logging
-  util/retry.go      Retry utility function
+  util/
+    retry.go         Retry utility function
+    backoff.go       Jittered exponential backoff for reconnect loops
+    file.go          Atomic file writes (temp file + rename)
 test_data/
   vpn_list.csv       Test fixture (sample CSV with 98 servers)
 ```
@@ -101,15 +122,14 @@ non-idiomatic, maintain this pattern for consistency unless refactoring broadly.
 
 The codebase uses different patterns by layer:
 
-**CLI layer (`cmd/`)** - terminate on error:
-```go
-log.Fatal().Msg(err.Error())
-```
+**CLI layer (`cmd/`)** - return errors from `RunE`; `root.go`'s `Execute()`
+is the single place that prints the error to stderr and exits 1. Cobra's
+own error/usage output is silenced to avoid duplicating it.
 
-**Package layer (`pkg/vpn/list.go`)** - wrap errors with context using `juju/errors`:
+**Package layer (`pkg/vpn/list.go`)** - wrap errors with context using
+`fmt.Errorf` and `%w`:
 ```go
-return nil, errors.Annotate(err, "Unable to read stream")
-return nil, errors.Annotatef(err, "Unexpected status code: %d", resp.StatusCode)
+return nil, fmt.Errorf("unable to read stream: %w", err)
 ```
 
 **Utility layer (`pkg/vpn/cache.go`, `pkg/exec/`)** - return bare errors.
@@ -155,12 +175,17 @@ package. Argument validation uses cobra validators (`cobra.RangeArgs`, `cobra.No
 Key dependencies (see `go.mod`):
 - `github.com/spf13/cobra` - CLI framework
 - `github.com/rs/zerolog` - Structured logging
-- `github.com/juju/errors` - Error annotation
 - `github.com/stretchr/testify` - Test assertions
 - `github.com/AlecAivazis/survey/v2` - Interactive prompts
 - `github.com/jszwec/csvutil` - CSV parsing
 - `github.com/olekukonko/tablewriter` - Table output
 - `golang.org/x/net` - SOCKS5 proxy support
+
+`--version` is injected at build time: `cmd.version` is a `var` set via
+`-ldflags "-X github.com/davegallant/vpngate/cmd.version=X.Y.Z"` by both
+the justfile `build` recipe (version read from the latest versioned
+CHANGELOG.md entry) and `.goreleaser.yaml`. Plain `go build` reports
+`dev`.
 
 ### CI/CD
 

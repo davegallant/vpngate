@@ -3,6 +3,7 @@ package vpn
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"golang.org/x/net/proxy"
 
 	"github.com/davegallant/vpngate/pkg/util"
-	"github.com/juju/errors"
 )
 
 const (
@@ -45,16 +45,16 @@ func parseVpnList(r io.Reader) (*[]Server, error) {
 
 	serverList, err := io.ReadAll(r)
 	if err != nil {
-		return nil, errors.Annotate(err, "Unable to read stream")
+		return nil, fmt.Errorf("unable to read stream: %w", err)
 	}
 
 	// Trim known invalid rows
 	serverList = bytes.TrimPrefix(serverList, []byte("*vpn_servers\r\n"))
 	serverList = bytes.TrimSuffix(serverList, []byte("*\r\n"))
-	serverList = bytes.ReplaceAll(serverList, []byte(`"`), []byte{})
+	serverList = bytes.ReplaceAll(serverList, []byte(`\"`), []byte{})
 
 	if err := csvutil.Unmarshal(serverList, &servers); err != nil {
-		return nil, errors.Annotatef(err, "Unable to parse CSV")
+		return nil, fmt.Errorf("unable to parse CSV: %w", err)
 	}
 
 	for i := range servers {
@@ -73,16 +73,22 @@ var countryAliases = map[string]string{
 	"Russian Federation": "Russia",
 }
 
+// baseTransport returns a copy of http.DefaultTransport so proxy
+// configurations keep sane timeouts (TLS handshake, response header,
+// idle connections) instead of a zero-value transport.
+func baseTransport() *http.Transport {
+	return http.DefaultTransport.(*http.Transport).Clone()
+}
+
 // createHTTPClient creates an HTTP client with optional proxy configuration
 func createHTTPClient(httpProxy string, socks5Proxy string) (*http.Client, error) {
 	if httpProxy != "" {
 		proxyURL, err := url.Parse(httpProxy)
 		if err != nil {
-			return nil, errors.Annotatef(err, "Error parsing HTTP proxy: %s", httpProxy)
+			return nil, fmt.Errorf("error parsing HTTP proxy %q: %w", httpProxy, err)
 		}
-		transport := &http.Transport{
-			Proxy: http.ProxyURL(proxyURL),
-		}
+		transport := baseTransport()
+		transport.Proxy = http.ProxyURL(proxyURL)
 		return &http.Client{
 			Transport: transport,
 			Timeout:   httpClientTimeout,
@@ -92,49 +98,50 @@ func createHTTPClient(httpProxy string, socks5Proxy string) (*http.Client, error
 	if socks5Proxy != "" {
 		dialer, err := proxy.SOCKS5("tcp", socks5Proxy, nil, proxy.Direct)
 		if err != nil {
-			return nil, errors.Annotatef(err, "Error creating SOCKS5 dialer: %v", err)
+			return nil, fmt.Errorf("error creating SOCKS5 dialer: %w", err)
 		}
 
-		// Create a DialContext function from the SOCKS5 dialer
+		// proxy.SOCKS5's dialer has no context-aware Dial, so run it in
+		// a goroutine and select on a timeout-bound context. The
+		// buffered channel guarantees the goroutine never blocks on
+		// send, so no goroutine outlives the dial either way.
 		dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
-			// Check if context is already done
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			default:
-			}
+			dialCtx, cancel := context.WithTimeout(ctx, dialTimeout)
+			defer cancel()
 
-			// Use the dialer with a timeout
-			conn, err := dialer.Dial(network, addr)
-			if err != nil {
-				return nil, err
+			type dialResult struct {
+				conn net.Conn
+				err  error
 			}
-
-			// Respect context cancellation after connection
+			resultCh := make(chan dialResult, 1)
 			go func() {
-				<-ctx.Done()
-				_ = conn.Close()
+				conn, err := dialer.Dial(network, addr)
+				resultCh <- dialResult{conn: conn, err: err}
 			}()
 
-			return conn, nil
+			select {
+			case <-dialCtx.Done():
+				return nil, dialCtx.Err()
+			case res := <-resultCh:
+				return res.conn, res.err
+			}
 		}
 
-		httpTransport := &http.Transport{
-			DialContext: dialContext,
-		}
+		transport := baseTransport()
+		transport.DialContext = dialContext
 		return &http.Client{
-			Transport: httpTransport,
+			Transport: transport,
 			Timeout:   httpClientTimeout,
 		}, nil
 	}
 
+	transport := baseTransport()
+	transport.DialContext = (&net.Dialer{
+		Timeout: dialTimeout,
+	}).DialContext
 	return &http.Client{
-		Timeout: httpClientTimeout,
-		Transport: &http.Transport{
-			DialContext: (&net.Dialer{
-				Timeout: dialTimeout,
-			}).DialContext,
-		},
+		Timeout:   httpClientTimeout,
+		Transport: transport,
 	}, nil
 }
 
@@ -187,7 +194,7 @@ func GetListWithOptions(httpProxy string, socks5Proxy string, opts ListOptions) 
 		}()
 
 		if resp.StatusCode != http.StatusOK {
-			return errors.Errorf("Unexpected status code when retrieving vpn list: %d", resp.StatusCode)
+			return fmt.Errorf("unexpected status code when retrieving vpn list: %d", resp.StatusCode)
 		}
 
 		parsedServers, err := parseVpnList(resp.Body)

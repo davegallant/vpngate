@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"time"
+
+	"github.com/davegallant/vpngate/pkg/util"
 )
 
 // State is the on-disk record of a running daemon, written by the
@@ -11,6 +13,7 @@ import (
 // `status`/`disconnect` in separate process invocations.
 type State struct {
 	PID         int       `json:"pid"`
+	OpenVPNPID  int       `json:"openvpn_pid"`
 	ControlAddr string    `json:"control_addr"`
 	HostName    string    `json:"hostname"`
 	IPAddr      string    `json:"ip_addr"`
@@ -18,7 +21,9 @@ type State struct {
 	StartedAt   time.Time `json:"started_at"`
 }
 
-// Save writes state to StatePath(), creating Dir() if needed.
+// Save writes state to StatePath(), creating Dir() if needed. The write
+// is atomic, so a crash mid-save never leaves a half-written state file
+// for the next `status` invocation to choke on.
 func Save(state State) error {
 	if err := os.MkdirAll(Dir(), 0o700); err != nil {
 		return err
@@ -27,7 +32,7 @@ func Save(state State) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(StatePath(), data, 0o600)
+	return util.WriteFileAtomic(StatePath(), data, 0o600)
 }
 
 // Load reads and parses StatePath(). Callers should check

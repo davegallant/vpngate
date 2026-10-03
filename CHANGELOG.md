@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+- Enable GoReleaser to publish Winget manifest updates and open PRs on tagged releases.
+- Fix `vpngate --version` reporting a stale hardcoded version: `cmd.version` is now injected at build time via ldflags, from the latest versioned CHANGELOG.md entry (`just build`) or the release tag (goreleaser).
+- Add jittered exponential backoff to both reconnect loops (foreground `connect --reconnect` and the background supervisor), so a dead server no longer spins respawning openvpn; the sequence resets after a long-lived connection.
+- Fix `--country us` also matching Russia: country filtering now prefers exact matches on the country code or full name, falling back to substring matching only when nothing matches exactly.
+- The daemon now waits for openvpn to report CONNECTED (not just the management interface answering) before writing its state file, so "Connected in background" means the tunnel is up; `connect -d` fails fast with the daemon log tail when the daemon dies during startup instead of waiting out the full timeout.
+- Fix `disconnect` leaving an orphaned openvpn behind when the supervisor crashed: the fallback path now also kills the recorded openvpn PID, and `connect -d` refuses to start a second daemon while one is still negotiating.
+- Strip script/plugin directives (`up`, `down`, `plugin`, `script-security`, etc.) from volunteer-server OpenVPN configs before handing them to openvpn, with a warning naming what was disabled.
+- Ctrl+C during a foreground `connect` no longer leaks the temp OpenVPN config in /tmp (SIGINT/SIGTERM handler removes it).
+- Broaden `--data-ciphers` from CBC-only to `AES-256-GCM:AES-128-GCM:AES-256-CBC:AES-128-CBC` so modern servers negotiate GCM while legacy ones still work.
+- On Windows, fall back to PATH lookup for openvpn when the default install path doesn't exist.
+- Write daemon state and the server-list cache atomically (temp file + rename) so a crash can't leave half-written JSON behind.
+- Replace `github.com/juju/errors` with stdlib `fmt.Errorf`/`%w` wrapping.
+- Proxy HTTP transports now clone `http.DefaultTransport` (sane TLS/connection timeouts) instead of using a zero-value transport; the SOCKS5 dial is now properly bounded by a context timeout without a lingering goroutine per connection.
+- `util.Retry` no longer sleeps after the final attempt.
+- `just lint` installs golangci-lint into `.bin/` via `go install` instead of `go get`, which was polluting go.mod/go.sum.
+- Rename `cmd/servers.go` to `cmd/filters.go` (it holds shared filter/sort helpers, not a command).
+- Switch `math/rand` to `math/rand/v2`.
+- Refresh AGENTS.md (error-handling docs, project structure, version injection) and fix the README's deprecated `go get` install line.
+
 ## 0.7.0
 
 - Add `vpngate logs` to view the log for a background connection started with `connect -d`, with `-f`/`--follow` and `-n`/`--lines` options.
@@ -11,7 +32,7 @@
 - Add `connect -d`/`--daemon` to run a vpn connection in the background.
 - Add `vpngate status` to check on a background connection started with `connect -d`.
 - Add `vpngate disconnect` to tear down a background connection started with `connect -d`.
-- Add winget packaging for Windows (manifest publishing is currently disabled pending fork/token setup).
+- Add Winget packaging for Windows, with GoReleaser opening manifest update PRs on tagged releases.
 - Fix `connect -d` silently timing out with no useful error when OpenVPN isn't installed: the background supervisor now logs its own startup failures to `daemon.log` (previously discarded, since the detached process has no console), with the same "is required, please install it" message the foreground `connect` command already gives.
 
 ## 0.5.0

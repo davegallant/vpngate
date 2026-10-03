@@ -30,13 +30,8 @@ var (
 
 func filterServers(servers *[]vpn.Server) *[]vpn.Server {
 	filtered := make([]vpn.Server, 0, len(*servers))
-	country := strings.ToLower(flagCountry)
 
 	for _, server := range *servers {
-		if country != "" && strings.ToLower(server.CountryShort) != country && !strings.Contains(strings.ToLower(server.CountryLong), country) {
-			continue
-		}
-
 		if flagMinScore > 0 && server.Score < flagMinScore {
 			continue
 		}
@@ -51,7 +46,37 @@ func filterServers(servers *[]vpn.Server) *[]vpn.Server {
 		filtered = append(filtered, server)
 	}
 
+	if country := strings.ToLower(flagCountry); country != "" {
+		// Prefer exact matches on the country code or full name:
+		// substring matching makes "--country us" match "russia".
+		if exact := filterByCountryExact(filtered, country); len(exact) > 0 {
+			return &exact
+		}
+		sub := filterByCountrySubstring(filtered, country)
+		return &sub
+	}
+
 	return &filtered
+}
+
+func filterByCountryExact(servers []vpn.Server, country string) []vpn.Server {
+	matched := make([]vpn.Server, 0)
+	for _, server := range servers {
+		if strings.ToLower(server.CountryShort) == country || strings.ToLower(server.CountryLong) == country {
+			matched = append(matched, server)
+		}
+	}
+	return matched
+}
+
+func filterByCountrySubstring(servers []vpn.Server, country string) []vpn.Server {
+	matched := make([]vpn.Server, 0)
+	for _, server := range servers {
+		if strings.Contains(strings.ToLower(server.CountryLong), country) {
+			matched = append(matched, server)
+		}
+	}
+	return matched
 }
 
 func sortServers(servers *[]vpn.Server) {

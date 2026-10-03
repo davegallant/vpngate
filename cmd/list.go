@@ -6,10 +6,9 @@ import (
 	"strings"
 
 	tw "github.com/olekukonko/tablewriter"
+	"github.com/spf13/cobra"
 
 	"github.com/davegallant/vpngate/pkg/vpn"
-
-	"github.com/spf13/cobra"
 )
 
 func init() {

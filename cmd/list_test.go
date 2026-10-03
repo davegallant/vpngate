@@ -37,6 +37,34 @@ func TestFilterServersByCountryNameSubstring(t *testing.T) {
 	assert.Len(t, *got, 1)
 }
 
+func TestFilterServersByCountryCodePrefersExact(t *testing.T) {
+	defer resetFilterFlags()
+	servers := []vpn.Server{
+		{HostName: "a", CountryShort: "us", CountryLong: "United States"},
+		{HostName: "b", CountryShort: "ru", CountryLong: "Russia"},
+	}
+
+	// "us" is a substring of "russia" — exact matching must win.
+	flagCountry = "us"
+	got := filterServers(&servers)
+	assert.Len(t, *got, 1)
+	assert.Equal(t, "a", (*got)[0].HostName)
+}
+
+func TestFilterServersByCountrySubstringFallback(t *testing.T) {
+	defer resetFilterFlags()
+	servers := []vpn.Server{
+		{HostName: "a", CountryShort: "us", CountryLong: "United States"},
+		{HostName: "b", CountryShort: "jp", CountryLong: "Japan"},
+	}
+
+	// No exact match for "united", so substring matching kicks in.
+	flagCountry = "united"
+	got := filterServers(&servers)
+	assert.Len(t, *got, 1)
+	assert.Equal(t, "a", (*got)[0].HostName)
+}
+
 func TestFilterServersByMinScore(t *testing.T) {
 	defer resetFilterFlags()
 	servers := []vpn.Server{

@@ -3,9 +3,10 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/davegallant/vpngate/pkg/daemon"
+	"github.com/davegallant/vpngate/pkg/util"
 	"github.com/davegallant/vpngate/pkg/vpn"
 )
 
@@ -26,6 +28,9 @@ type supervisor struct {
 	reconnect  bool
 	logFile    *os.File
 	control    *daemon.ControlServer
+	// wake interrupts the backoff sleep between reconnect attempts so
+	// handleStop is prompt even when no openvpn process is running.
+	wake chan struct{}
 
 	mu        sync.Mutex
 	server    vpn.Server
@@ -50,7 +55,7 @@ func runSupervisor() error {
 
 	var initial vpn.Server
 	if flagRandom {
-		initial = filtered[rand.Intn(len(filtered))]
+		initial = filtered[rand.IntN(len(filtered))]
 	} else {
 		found := false
 		for _, s := range filtered {
@@ -93,9 +98,17 @@ func runSupervisor() error {
 		reconnect:  flagReconnect,
 		logFile:    logFile,
 		server:     initial,
+		wake:       make(chan struct{}, 1),
 	}
 	s.control = daemon.NewControlServer(controlLn, s.handleStatus, s.handleStop)
 	go s.control.Serve()
+
+	// Record the PID before the first attempt so the foreground process
+	// can tell "daemon died during startup" apart from "daemon still
+	// negotiating", and refuse to start a second daemon meanwhile.
+	if err := daemon.WritePid(os.Getpid()); err != nil {
+		return err
+	}
 
 	return s.run()
 }
@@ -103,8 +116,11 @@ func runSupervisor() error {
 func (s *supervisor) run() error {
 	defer func() {
 		_ = daemon.Remove()
+		_ = daemon.RemovePid()
 		_ = os.Remove(daemon.ConfigPath())
 	}()
+
+	backoff := util.NewBackoff(2*time.Second, time.Minute)
 
 	for {
 		s.mu.Lock()
@@ -113,11 +129,12 @@ func (s *supervisor) run() error {
 			return nil
 		}
 		if s.random {
-			s.server = s.vpnServers[rand.Intn(len(s.vpnServers))]
+			s.server = s.vpnServers[rand.IntN(len(s.vpnServers))]
 		}
 		server := s.server
 		s.mu.Unlock()
 
+		started := time.Now()
 		err := s.connectOnce(server)
 		if err != nil {
 			log.Error().Err(err).Msg("daemon connection attempt failed")
@@ -132,6 +149,18 @@ func (s *supervisor) run() error {
 		if stopping || !s.reconnect {
 			return nil
 		}
+
+		// Back off before retrying so a dead server doesn't spin the
+		// loop. A connection that lived a while resets the sequence.
+		if time.Since(started) > 30*time.Second {
+			backoff.Reset()
+		}
+		select {
+		case <-time.After(backoff.Next()):
+		case <-s.wake:
+			// disconnect() arrived during backoff — loop around so
+			// the stopping check above exits promptly.
+		}
 	}
 }
 
@@ -143,7 +172,14 @@ func (s *supervisor) connectOnce(server vpn.Server) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(daemon.ConfigPath(), decoded, 0o600); err != nil {
+
+	// VPNGate configs come from volunteer-run servers: strip any
+	// script/plugin directives before handing the file to openvpn.
+	config, stripped := vpn.SanitizeConfig(decoded)
+	if len(stripped) > 0 {
+		log.Warn().Msgf("disabled script directives from server config: %s", strings.Join(stripped, ", "))
+	}
+	if err := os.WriteFile(daemon.ConfigPath(), config, 0o600); err != nil {
 		return err
 	}
 
@@ -159,6 +195,16 @@ func (s *supervisor) connectOnce(server vpn.Server) error {
 
 	mgmt, err := waitForManagement(mgmtAddr, 30*time.Second)
 	if err != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return err
+	}
+
+	// The state file (and the foreground's "Connected" message) should
+	// mean the tunnel is up — not just that the management interface
+	// answered.
+	if err := waitForConnectedState(mgmt, 30*time.Second); err != nil {
+		_ = mgmt.Close()
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()
 		return err
@@ -183,6 +229,7 @@ func (s *supervisor) connectOnce(server vpn.Server) error {
 
 	if err := daemon.Save(daemon.State{
 		PID:         os.Getpid(),
+		OpenVPNPID:  cmd.Process.Pid,
 		ControlAddr: s.control.Addr(),
 		HostName:    server.HostName,
 		IPAddr:      server.IPAddr,
@@ -240,6 +287,29 @@ func waitForManagement(addr string, timeout time.Duration) (*daemon.Management, 
 	}
 }
 
+// waitForConnectedState polls the management interface until openvpn
+// reports CONNECTED, fails fast if openvpn starts exiting, or timeout
+// elapses.
+func waitForConnectedState(mgmt *daemon.Management, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for {
+		state, err := mgmt.State()
+		if err != nil {
+			return fmt.Errorf("reading openvpn connection state: %w", err)
+		}
+		switch state {
+		case "CONNECTED":
+			return nil
+		case "EXITING":
+			return fmt.Errorf("openvpn exited while connecting")
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("timed out waiting for openvpn to report CONNECTED (last state %q)", state)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
 // handleStatus answers a STATUS control request with the supervisor's
 // current view of the connection.
 func (s *supervisor) handleStatus() (daemon.Snapshot, error) {
@@ -276,6 +346,13 @@ func (s *supervisor) handleStop() {
 	s.stopping = true
 	mgmt := s.mgmt
 	s.mu.Unlock()
+
+	// Interrupt a backoff sleep between attempts so disconnect stays
+	// prompt even when no openvpn process is currently running.
+	select {
+	case s.wake <- struct{}{}:
+	default:
+	}
 
 	if mgmt != nil {
 		_ = mgmt.Disconnect()

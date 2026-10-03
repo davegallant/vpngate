@@ -52,7 +52,7 @@ Once the release is extracted, open Command Prompt *as Administrator*, and run v
 Ensure that [go](https://golang.org/doc/install) is installed.
 
 ```shell
-CGO_ENABLED=0 go get github.com/davegallant/vpngate
+CGO_ENABLED=0 go install github.com/davegallant/vpngate@latest
 ```
 
 Ensure that the go bin path is discoverable:

@@ -3,19 +3,23 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	osexec "os/exec"
+	"os/signal"
 	"strconv"
 	"strings"
+	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
 
 	"github.com/davegallant/vpngate/pkg/daemon"
+	"github.com/davegallant/vpngate/pkg/util"
 	"github.com/davegallant/vpngate/pkg/vpn"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -99,10 +103,27 @@ var connectCmd = &cobra.Command{
 			return startDaemon(serverSelected)
 		}
 
+		// currentConfigPath tracks the live temp config so a SIGINT/SIGTERM
+		// arriving while openvpn runs still removes it — otherwise every
+		// Ctrl+C leaks a file in /tmp.
+		var currentConfigPath atomic.Value
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+		defer signal.Stop(sigCh)
+		go func() {
+			<-sigCh
+			if p, ok := currentConfigPath.Load().(string); ok && p != "" {
+				_ = os.Remove(p)
+			}
+			os.Exit(130)
+		}()
+
+		backoff := util.NewBackoff(2*time.Second, time.Minute)
+
 		for {
 			if flagRandom {
 				// Select a random server
-				serverSelected = (*vpnServers)[rand.Intn(len(*vpnServers))]
+				serverSelected = (*vpnServers)[rand.IntN(len(*vpnServers))]
 			}
 
 			decodedConfig, err := base64.StdEncoding.DecodeString(serverSelected.OpenVpnConfigData)
@@ -110,12 +131,19 @@ var connectCmd = &cobra.Command{
 				return err
 			}
 
+			// VPNGate configs come from volunteer-run servers: strip any
+			// script/plugin directives before handing the file to openvpn.
+			config, stripped := vpn.SanitizeConfig(decodedConfig)
+			if len(stripped) > 0 {
+				log.Warn().Msgf("disabled script directives from server config: %s", strings.Join(stripped, ", "))
+			}
+
 			tmpfile, err := os.CreateTemp("", "vpngate-openvpn-config-")
 			if err != nil {
 				return err
 			}
 
-			if _, err := tmpfile.Write(decodedConfig); err != nil {
+			if _, err := tmpfile.Write(config); err != nil {
 				_ = tmpfile.Close()
 				_ = os.Remove(tmpfile.Name())
 				return err
@@ -128,7 +156,10 @@ var connectCmd = &cobra.Command{
 
 			log.Info().Msgf("Connecting to %s (%s) in %s", serverSelected.HostName, serverSelected.IPAddr, serverSelected.CountryLong)
 
+			currentConfigPath.Store(tmpfile.Name())
+			started := time.Now()
 			err = vpn.Connect(tmpfile.Name())
+			currentConfigPath.Store("")
 
 			// Always try to clean up temporary file
 			_ = os.Remove(tmpfile.Name())
@@ -139,6 +170,17 @@ var connectCmd = &cobra.Command{
 				}
 				return nil
 			}
+
+			// Reconnect mode: back off before retrying so a dead server
+			// doesn't spin the loop. A connection that lived a while
+			// resets the sequence — the next retry should be prompt.
+			if time.Since(started) > 30*time.Second {
+				backoff.Reset()
+			}
+			if err != nil {
+				log.Error().Err(err).Msg("connection attempt failed, retrying")
+			}
+			time.Sleep(backoff.Next())
 		}
 	},
 }
@@ -154,7 +196,16 @@ func startDaemon(serverSelected vpn.Server) error {
 			return fmt.Errorf("already connected to %s (PID %d); run 'vpngate disconnect' first", state.HostName, state.PID)
 		}
 		_ = daemon.Remove()
-	} else if !os.IsNotExist(err) {
+	} else if os.IsNotExist(err) {
+		// No state file — but a daemon may still be negotiating its first
+		// connection, since state is only written once the tunnel is up.
+		if pid, perr := daemon.ReadPid(); perr == nil {
+			if daemon.IsAlive(pid) {
+				return fmt.Errorf("a background connection is already starting (PID %d)", pid)
+			}
+			_ = daemon.RemovePid()
+		}
+	} else {
 		return err
 	}
 
@@ -179,7 +230,7 @@ func startDaemon(serverSelected vpn.Server) error {
 		return err
 	}
 
-	return waitForDaemonReady(30 * time.Second)
+	return waitForDaemonReady(75 * time.Second)
 }
 
 // forwardableConnectArgs reproduces the subset of connect's own flags
@@ -218,8 +269,9 @@ func forwardableConnectArgs() []string {
 }
 
 // waitForDaemonReady polls for the daemon's state file to appear,
-// signalling a successful first connection, surfacing the tail of the
-// daemon log if it times out instead.
+// signalling the tunnel is up. It fails fast when the daemon process dies
+// before connecting, and surfaces the tail of the daemon log when it
+// times out instead.
 func waitForDaemonReady(timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for {
@@ -230,6 +282,12 @@ func waitForDaemonReady(timeout time.Duration) error {
 		}
 		if !os.IsNotExist(err) {
 			return err
+		}
+		// The daemon died before the tunnel came up — don't wait out the
+		// full timeout; the log has the reason.
+		if pid, perr := daemon.ReadPid(); perr == nil && !daemon.IsAlive(pid) {
+			_ = daemon.RemovePid()
+			return fmt.Errorf("background connection failed; see %s\n%s", daemon.LogPath(), tailLog())
 		}
 		if time.Now().After(deadline) {
 			return fmt.Errorf("timed out waiting for background connection; see %s\n%s", daemon.LogPath(), tailLog())
