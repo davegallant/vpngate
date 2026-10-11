@@ -3,6 +3,7 @@ package util
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,24 @@ func TestWriteFileAtomic(t *testing.T) {
 
 		info, err := os.Stat(path)
 		require.NoError(t, err)
-		assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
+		if runtime.GOOS == "windows" {
+			assert.Equal(t, os.FileMode(0o666), info.Mode().Perm())
+		} else {
+			assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
+		}
+	})
+
+	t.Run("applies read-only permissions on Windows", func(t *testing.T) {
+		if runtime.GOOS != "windows" {
+			t.Skip("Windows uses the owner-writable bit to set the read-only attribute")
+		}
+
+		path := filepath.Join(t.TempDir(), "out.txt")
+		require.NoError(t, WriteFileAtomic(path, []byte("read only"), 0o400))
+
+		info, err := os.Stat(path)
+		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(0o444), info.Mode().Perm())
 	})
 
 	t.Run("overwrites existing file", func(t *testing.T) {
