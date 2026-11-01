@@ -22,7 +22,7 @@
         pkgs.buildGo126Module {
           name = "vpngate";
           src = ./.;
-          vendorHash = "sha256-1pzTnmEqrGm2kJsk7kw2eylLsDWbmuz0pCOnjKDpN9M=";
+          vendorHash = "sha256-gZZsz03aXxg+UpdiO70nXqKgNaZbmWxGeSHBhio3eBY=";
           nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.makeWrapper ];
           env.CGO_ENABLED = 0;
           doCheck = false;
