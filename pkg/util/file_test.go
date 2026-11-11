@@ -3,6 +3,7 @@ package util
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +11,7 @@ import (
 )
 
 func TestWriteFileAtomic(t *testing.T) {
-	t.Run("writes content with requested permissions", func(t *testing.T) {
+	t.Run("writes content and applies permissions where supported", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "out.txt")
 
@@ -21,9 +22,11 @@ func TestWriteFileAtomic(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "hello", string(got))
 
-		info, err := os.Stat(path)
-		require.NoError(t, err)
-		assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
+		if runtime.GOOS != "windows" {
+			info, err := os.Stat(path)
+			require.NoError(t, err)
+			assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
+		}
 	})
 
 	t.Run("overwrites existing file", func(t *testing.T) {
